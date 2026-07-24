@@ -4,3 +4,7 @@ export interface Server {
   imageUrl?: string | null;
   createdAt: string;
 }
+
+export interface JoinServerInput {
+  inviteCode: string;
+}

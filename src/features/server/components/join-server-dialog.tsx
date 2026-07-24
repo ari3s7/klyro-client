@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { createServer } from "../api/server-api";
+import { joinServer } from "../api/join-server-api";
 
 import {
   Dialog,
@@ -16,25 +16,24 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 
 const schema = z.object({
-  name: z.string().min(3, "Server name must be at least 3 characters."),
-  description: z.string().optional(),
+  inviteCode: z.string().min(1, "Invite code is required"),
 });
 
 type FormValues = z.infer<typeof schema>;
 
-interface CreateServerDialogProps {
+interface JoinServerDialogProps {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export default function CreateServerDialog({
+export default function JoinServerDialog({
   open,
   setOpen,
-}: CreateServerDialogProps) {
- 
+}: JoinServerDialogProps) {
+  
+
   const queryClient = useQueryClient();
 
   const {
@@ -47,61 +46,57 @@ export default function CreateServerDialog({
   });
 
   const mutation = useMutation({
-  mutationFn: createServer,
+    mutationFn: joinServer,
 
-  onSuccess: (data) => {
-    console.log("Success:", data);
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["servers"],
+      });
 
-    queryClient.invalidateQueries({
-      queryKey: ["servers"],
-    });
+      reset();
+      setOpen(false);
+    },
 
-    reset();
-    setOpen(false);
-  },
-
-  onError: (error) => {
-    console.error("Error:", error);
-  },
-});
+    onError: (error) => {
+      console.error(error);
+    },
+  });
 
   const onSubmit = (data: FormValues) => {
-  console.log("Submitting:", data);
-  mutation.mutate(data);
-};
+    mutation.mutate(data);
+  };
 
-    return (
+  return (
     <Dialog open={open} onOpenChange={setOpen}>
+
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create Server</DialogTitle>
+          <DialogTitle>Join Server</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-4"
+        >
           <div>
             <Input
-              placeholder="Server Name"
-              {...register("name")}
+              placeholder="Invite Code"
+              {...register("inviteCode")}
             />
 
-            {errors.name && (
+            {errors.inviteCode && (
               <p className="mt-1 text-sm text-red-500">
-                {errors.name.message}
+                {errors.inviteCode.message}
               </p>
             )}
           </div>
-
-          <Textarea
-            placeholder="Description (optional)"
-            {...register("description")}
-          />
 
           <DialogFooter>
             <Button
               type="submit"
               disabled={mutation.isPending}
             >
-              {mutation.isPending ? "Creating..." : "Create"}
+              {mutation.isPending ? "Joining..." : "Join"}
             </Button>
           </DialogFooter>
         </form>
