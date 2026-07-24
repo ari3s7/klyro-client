@@ -68,7 +68,7 @@ const logoutMutation = useMutation({
   },
 });
   return (
-    <aside className="flex w-20 flex-col items-center gap-3 border-r border-zinc-800 bg-zinc-900 py-4">
+    <aside className="flex h-full w-full flex-col items-center gap-3 border-r border-zinc-800 bg-zinc-900 py-3">
       {/* Loading */}
       {isLoading && (
         <p className="text-xs text-zinc-400">...</p>
@@ -86,7 +86,7 @@ const logoutMutation = useMutation({
   <div key={server.id} className="relative group">
     <button
       onClick={() => onSelectServer(server.id)}
-      className={`flex h-12 w-12 items-center justify-center rounded-2xl text-lg font-semibold transition ${
+      className={`flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-2xl text-base md:text-lg font-semibold transition ${
         selectedServerId === server.id
           ? "bg-indigo-600"
           : "bg-zinc-800 hover:bg-indigo-600"
@@ -115,7 +115,7 @@ const logoutMutation = useMutation({
 
       <DropdownMenu>
   <DropdownMenuTrigger >
-    <button className="mt-auto flex h-12 w-12 items-center justify-center rounded-full bg-indigo-600 text-lg font-semibold text-white hover:bg-indigo-500 transition">
+    <button className="mt-auto flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-indigo-600 text-base md:text-lg font-semibold text-white hover:bg-indigo-500 transition">
       {user?.username?.[0]?.toUpperCase() ?? "?"}
     </button>
   </DropdownMenuTrigger>

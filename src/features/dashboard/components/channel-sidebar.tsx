@@ -46,7 +46,7 @@ const deleteMutation = useMutation({
 
   if (!selectedServerId) {
     return (
-      <aside className="flex w-72 flex-col border-r border-zinc-800 bg-zinc-900">
+      <aside className="flex w-full flex-col border-r border-zinc-800 bg-zinc-900">
         <div className="border-b border-zinc-800 p-4">
           <h2 className="font-semibold">Select a Server</h2>
         </div>
@@ -60,9 +60,9 @@ const deleteMutation = useMutation({
 
 
   return (
-    <aside className="flex w-72 flex-col border-r border-zinc-800 bg-zinc-900">
+    <aside className="flex w-full flex-col border-r border-zinc-800 bg-zinc-900">
       {/* Header */}
-      <div className="border-b border-zinc-800 p-4">
+      <div className="border-b border-zinc-800 p-3 md:p-4">
         <div className="flex items-center justify-between">
   <h2 className="font-semibold">Channels</h2>
 
@@ -92,7 +92,7 @@ const deleteMutation = useMutation({
   <button
     key={channel.id}
     onClick={() => onSelectChannel(channel.id)}
-    className={`group relative w-full rounded px-3 py-2 text-left transition ${
+    className={`group relative w-full rounded-lg px-3 py-3 md:py-2 text-left transition ${
       selectedChannelId === channel.id
         ? "bg-zinc-700 text-white"
         : "text-zinc-400 hover:bg-zinc-800 hover:text-white"

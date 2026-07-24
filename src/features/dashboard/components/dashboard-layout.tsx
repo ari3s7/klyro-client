@@ -17,8 +17,9 @@ export default function DashboardLayout() {
     };
   }, []);
 
-  return (
-    <main className="flex h-screen bg-zinc-950 text-white">
+ return (
+  <main className="flex h-screen bg-zinc-950 text-white overflow-hidden">
+    <div className="w-16 md:w-20 shrink-0">
       <ServerSidebar
         selectedServerId={selectedServerId}
         onSelectServer={(serverId) => {
@@ -26,16 +27,29 @@ export default function DashboardLayout() {
           setSelectedChannelId(null);
         }}
       />
+    </div>
 
+    <div
+      className={`${
+        selectedChannelId ? "hidden md:flex" : "flex"
+      } w-56 md:w-72 shrink-0`}
+    >
       <ChannelSidebar
         selectedServerId={selectedServerId}
         selectedChannelId={selectedChannelId}
         onSelectChannel={setSelectedChannelId}
       />
+    </div>
 
+    <div
+      className={`${
+        selectedChannelId ? "flex" : "hidden md:flex"
+      } flex-1 min-w-0`}
+    >
       <ChatArea
         selectedChannelId={selectedChannelId}
       />
-    </main>
-  );
-}
+    </div>
+  </main>
+)
+};
