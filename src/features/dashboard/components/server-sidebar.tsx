@@ -63,9 +63,16 @@ const logoutMutation = useMutation({
   mutationFn: logout,
 
   onSuccess: async () => {
-    queryClient.clear();
-    navigate("/login", { replace: true });
-  },
+  await queryClient.invalidateQueries({
+    queryKey: ["me"],
+  });
+
+  queryClient.removeQueries({
+    queryKey: ["me"],
+  });
+
+  navigate("/login", { replace: true });
+},
 });
   return (
     <aside className="flex h-full w-full flex-col items-center gap-3 border-r border-zinc-800 bg-zinc-900 py-3">
