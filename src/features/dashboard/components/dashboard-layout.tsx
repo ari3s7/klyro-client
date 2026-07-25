@@ -4,10 +4,20 @@ import ChannelSidebar from "./channel-sidebar";
 import ServerSidebar from "./server-sidebar";
 import { useEffect } from "react";
 import { socket } from "@/lib/socket";
+import { useQuery } from "@tanstack/react-query";
+import { getServers } from "@/features/server/api/server-api";
 
 export default function DashboardLayout() {
   const [selectedServerId, setSelectedServerId] = useState<string | null>(null);
   const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
+  const { data: servers = [] } = useQuery({
+  queryKey: ["servers"],
+  queryFn: getServers,
+});
+
+const selectedServer = servers.find(
+  (server) => server.id === selectedServerId
+);
 
   useEffect(() => {
     socket.connect();
@@ -35,10 +45,11 @@ export default function DashboardLayout() {
       } w-56 md:w-72 shrink-0`}
     >
       <ChannelSidebar
+        selectedServer={selectedServer}
         selectedServerId={selectedServerId}
         selectedChannelId={selectedChannelId}
         onSelectChannel={setSelectedChannelId}
-      />
+/>
     </div>
 
     <div
