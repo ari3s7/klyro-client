@@ -168,7 +168,7 @@ useEffect(() => {
     {message.sender.id === user?.id && (
     <button
       onClick={() => deleteMutation.mutate(message.id)}
-      className="hidden rounded-md p-1 text-red-400 transition hover:bg-zinc-800 hover:text-red-300 group-hover:block"
+      className="block md:hidden rounded p-1 text-red-400 hover:bg-zinc-700 hover:text-red-300 md:hidden md:group-hover:block"
     >
       <Trash2 size={15} />
     </button>

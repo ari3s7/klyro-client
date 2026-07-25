@@ -111,7 +111,7 @@ const logoutMutation = useMutation({
             deleteMutation.mutate(server.id);
           }
         }}
-        className="absolute -top-1 -right-1 hidden h-5 w-5 items-center justify-center rounded-full bg-red-600 text-white group-hover:flex hover:bg-red-700"
+        className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-white hover:bg-red-700 md:opacity-0 md:group-hover:opacity-100 transition"
       >
         <Trash2 className="h-3 w-3" />
       </button>
