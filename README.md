@@ -1,75 +1,192 @@
-# React + TypeScript + Vite
+# Klyro Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern frontend for **Klyro**, a Discord-inspired real-time chat application. Built with React, TypeScript, and Socket.IO to deliver a fast, responsive, and interactive user experience.
 
-Currently, two official plugins are available:
+> A clean, scalable frontend designed for seamless real-time communication.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## ✨ Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Authentication
+- Secure Login & Signup
+- Persistent authentication
+- Protected routes
+- Automatic session handling
 
-## Expanding the ESLint configuration
+### Servers
+- Create and join servers
+- Server switching
+- Leave servers
+- Server navigation sidebar
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Channels
+- Browse text and voice channels
+- Create channels
+- Update and delete channels
+- Channel organization
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Messaging
+- Real-time messaging
+- Infinite message history
+- Edit and delete messages
+- File attachments
+- Auto-scroll to latest messages
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Real-time
+- Instant message updates
+- Live user connection status
+- Socket.IO integration
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### UI/UX
+- Responsive layout
+- Discord-inspired interface
+- Loading skeletons
+- Toast notifications
+- Optimistic UI updates
 
-```
+---
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+# Tech Stack
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+| Category | Technology |
+|----------|------------|
+| Framework | React |
+| Language | TypeScript |
+| Build Tool | Vite |
+| Styling | Tailwind CSS |
+| Routing | React Router |
+| Data Fetching | TanStack Query |
+| Forms | React Hook Form |
+| Validation | Zod |
+| HTTP Client | Axios |
+| Real-time | Socket.IO Client |
+| Icons | Lucide React |
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+---
+
+# Project Structure
 
 ```
+src/
+│
+├── api/
+├── assets/
+├── components/
+├── features/
+│   ├── auth/
+│   ├── server/
+│   ├── channel/
+│   ├── message/
+│   └── user/
+├── hooks/
+├── layouts/
+├── lib/
+├── pages/
+├── routes/
+├── types/
+├── utils/
+└── main.tsx
+```
+
+---
+
+# Application Pages
+
+- Authentication
+  - Login
+  - Register
+
+- Dashboard
+  - Server List
+  - Channel List
+  - Chat Area
+
+- Settings
+  - Profile
+  - Server Management
+
+---
+
+# Real-Time Features
+
+- Live messaging
+- Instant channel updates
+- User connection status
+- Socket reconnection
+- Real-time UI synchronization
+
+---
+
+# State Management
+
+- TanStack Query for server state
+- React Hooks for local state
+- Optimistic updates
+- Automatic cache invalidation
+- Background refetching
+
+---
+
+# UI Components
+
+- Reusable component architecture
+- Modal dialogs
+- Dropdown menus
+- Forms with validation
+- Toast notifications
+- Responsive sidebar
+- Loading skeletons
+
+---
+
+# Performance Optimizations
+
+- Lazy-loaded routes
+- Component reusability
+- React Query caching
+- Optimistic updates
+- Memoized components
+- Efficient re-rendering
+
+---
+
+# Future Improvements
+
+- Voice channels
+- Video calls
+- Direct messages
+- Emoji reactions
+- User presence
+- Threaded conversations
+- Message search
+- Theme customization
+- Keyboard shortcuts
+- Mobile responsiveness
+- PWA support
+
+---
+
+# Backend Repository
+
+The backend is available in a separate repository.
+
+```
+klyro-server
+```
+
+---
+
+# License
+
+MIT
+
+---
+
+## Author
+
+**Abhishek Sharma**
+
+Backend Developer
+
+If you found this project useful, consider giving it a ⭐ on GitHub.
