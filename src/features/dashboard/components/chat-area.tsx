@@ -151,12 +151,21 @@ useEffect(() => {
           messages.map((message) => (
             <div
               key={message.id}
-              className="group relative rounded-lg bg-zinc-900 p-3"
+              className="group relative flex gap-3 rounded-lg bg-zinc-900 p-3"
             >
-              <div className="flex items-center justify-between">
-  <p className="font-semibold">
-    {message.sender.username}
-  </p>
+              <img
+    src={
+      message.sender.avatar ||
+      `https://api.dicebear.com/9.x/thumbs/svg?seed=${message.sender.username}`
+    }
+    alt={message.sender.username}
+    className="h-9 w-9 shrink-0 rounded-full bg-zinc-800"
+  />
+              <div className="flex-1">
+    <div className="flex items-center justify-between">
+      <p className="font-semibold">
+        {message.sender.username}
+      </p>
 
   <div className="flex items-center gap-2">
     <span className="text-xs text-zinc-500">
@@ -178,6 +187,7 @@ useEffect(() => {
 <p className="mt-2 text-zinc-300">
   {message.content}
 </p>
+</div>
             </div>
           ))
         )}

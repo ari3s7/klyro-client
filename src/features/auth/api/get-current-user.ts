@@ -4,6 +4,7 @@ export interface CurrentUser {
   id: string;
   username: string;
   email: string;
+  avatar?: string | null;
 }
 
 export const getCurrentUser = async (): Promise<CurrentUser> => {

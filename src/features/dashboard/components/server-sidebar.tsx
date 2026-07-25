@@ -40,6 +40,7 @@ export default function ServerSidebar({
   queryKey: ["current-user"],
   queryFn: getCurrentUser,
 });
+console.log("current user:", user); 
 
 const queryClient = useQueryClient();
 
@@ -121,11 +122,20 @@ const logoutMutation = useMutation({
       <ServerActions />
 
       <DropdownMenu>
-  <DropdownMenuTrigger >
-    <button className="mt-auto flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-indigo-600 text-base md:text-lg font-semibold text-white hover:bg-indigo-500 transition">
-      {user?.username?.[0]?.toUpperCase() ?? "?"}
-    </button>
-  </DropdownMenuTrigger>
+  <DropdownMenuTrigger>
+  <button className="mt-auto flex h-10 w-10 md:h-12 md:w-12 items-center justify-center overflow-hidden rounded-full bg-indigo-600 text-base md:text-lg font-semibold text-white hover:bg-indigo-500 transition">
+    {user?.avatar ? (
+      <img
+        src={user.avatar}
+        alt={user.username}
+        className="h-full w-full object-cover"
+      />
+    ) : (
+      user?.username?.[0]?.toUpperCase() ?? "?"
+    )}
+    
+  </button>
+</DropdownMenuTrigger>
 
   <DropdownMenuContent side="right" align="end">
     <DropdownMenuItem>
