@@ -4,8 +4,10 @@ import { getChannels } from "@/features/channel/api/channel-api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteChannel } from "@/features/channel/api/delete-channel";
 import { Trash2 } from "lucide-react";
+import type { Server } from "@/features/server/types";
 
 interface ChannelSidebarProps {
+  selectedServer: Server | undefined;
   selectedServerId: string | null;
   selectedChannelId: string | null;
   onSelectChannel: (channelId: string) => void;
@@ -14,6 +16,7 @@ interface ChannelSidebarProps {
  
 
 export default function ChannelSidebar({
+  selectedServer,
   selectedServerId,
   selectedChannelId,
   onSelectChannel,
@@ -38,11 +41,11 @@ const deleteMutation = useMutation({
       queryKey: ["channels", selectedServerId],
     });
   },
-
   onError: (error) => {
     console.error(error);
   },
 });
+
 
   if (!selectedServerId) {
     return (
@@ -62,18 +65,43 @@ const deleteMutation = useMutation({
   return (
     <aside className="flex w-full flex-col border-r border-zinc-800 bg-zinc-900">
       {/* Header */}
-      <div className="border-b border-zinc-800 p-3 md:p-4">
-        <div className="flex items-center justify-between">
-  <h2 className="font-semibold">Channels</h2>
+      {/* Header */}
+<div className="border-b border-zinc-800 p-4">
+  <div className="flex items-start justify-between">
+    <div className="flex-1">
+      <h2 className="text-lg font-semibold text-white">
+        {selectedServer?.name}
+      </h2>
 
-  {selectedServerId && (
-    <CreateChannelDialog
-      serverId={selectedServerId}
-    />
-  )}
-</div>
+      <div className="mt-3 flex items-center justify-between rounded-lg bg-zinc-800 px-3 py-2">
+        <div>
+          <p className="text-xs text-zinc-400">
+            Invite Code
+          </p>
+
+          <p className="font-mono text-sm tracking-wider text-white">
+            {selectedServer?.inviteCode}
+          </p>
+        </div>
+
+        <button
+          onClick={() => {
+            navigator.clipboard.writeText(selectedServer!.inviteCode);
+          }}
+          className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-500"
+        >
+          Copy
+        </button>
       </div>
+    </div>
 
+    {selectedServerId && (
+      <div className="ml-3 mt-1">
+        <CreateChannelDialog serverId={selectedServerId} />
+      </div>
+    )}
+  </div>
+</div>
       {/* Channels */}
       <div className="flex-1 overflow-y-auto p-2">
         {isLoading && (
@@ -106,7 +134,7 @@ const deleteMutation = useMutation({
       e.stopPropagation();
       deleteMutation.mutate(channel.id);
     }}
-    className="hidden rounded p-1 text-red-400 transition hover:bg-zinc-700 hover:text-red-300 group-hover:block"
+    className="block rounded p-1 text-red-400 transition hover:bg-zinc-700 hover:text-red-300 md:opacity-0 md:group-hover:opacity-100"
   >
     <Trash2 size={14} />
   </button>
