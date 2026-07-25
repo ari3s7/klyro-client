@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteChannel } from "@/features/channel/api/delete-channel";
 import { Trash2 } from "lucide-react";
 import type { Server } from "@/features/server/types";
+import { OnlineBadge } from "@/features/dashboard/components/onlineBadge";
 
 interface ChannelSidebarProps {
   selectedServer: Server | undefined;
@@ -72,6 +73,7 @@ const deleteMutation = useMutation({
       <h2 className="text-lg font-semibold text-white">
         {selectedServer?.name}
       </h2>
+       <OnlineBadge />
 
       <div className="mt-3 flex items-center justify-between rounded-lg bg-zinc-800 px-3 py-2">
         <div>
