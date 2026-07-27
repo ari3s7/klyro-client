@@ -3,9 +3,10 @@ import CreateChannelDialog from "@/features/channel/components/create-channel-di
 import { getChannels } from "@/features/channel/api/channel-api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteChannel } from "@/features/channel/api/delete-channel";
-import { Trash2 } from "lucide-react";
+import { Hash, Mic, Trash2 } from "lucide-react";
 import type { Server } from "@/features/server/types";
 import { OnlineBadge } from "@/features/dashboard/components/onlineBadge";
+
 
 interface ChannelSidebarProps {
   selectedServer: Server | undefined;
@@ -128,10 +129,18 @@ const deleteMutation = useMutation({
         : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
     }`}
   >
-    <div className="flex w-full items-center justify-between">
-  <span># {channel.name}</span>
+   <div className="flex w-full items-center justify-between">
+  <div className="flex items-center gap-2">
+    {channel.type === "TEXT" ? (
+      <Hash size={16} />
+    ) : (
+      <Mic size={16} />
+    )}
 
-   <button
+    <span>{channel.name}</span>
+  </div>
+
+  <button
     onClick={(e) => {
       e.stopPropagation();
       deleteMutation.mutate(channel.id);
