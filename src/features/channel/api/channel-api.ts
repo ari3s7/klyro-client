@@ -11,6 +11,7 @@ export const getChannels = async (
 
 interface CreateChannelInput {
   name: string;
+  type: "TEXT" | "VOICE";
 }
 
 export const createChannel = async (serverId: string, data: CreateChannelInput) => {
