@@ -1,14 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { getServers } from "@/features/server/api/server-api";
 import ServerActions from "@/features/server/components/server-actions";
+import EditServerDialog from "@/features/server/components/edit-server-dialog";
 import { getCurrentUser } from "@/features/auth/api/get-current-user"
 import { useMutation } from "@tanstack/react-query";
 import { logout } from "@/features/auth/api/logout";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { deleteServer } from "@/features/server/api/delete-server";
-
+import { useLongPress } from "@/hooks/use-long-press";
 
 import {
   DropdownMenu,
@@ -23,10 +25,139 @@ interface ServerSidebarProps {
   onSelectServer: (serverId: string) => void;
 }
 
+interface ServerItemProps {
+  server: { id: string; name: string; owner: { id: string; username: string } };
+  isSelected: boolean;
+  isOwner: boolean;
+  onSelect: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}
+
+function ServerItem({ server, isSelected, isOwner, onSelect, onEdit, onDelete }: ServerItemProps) {
+  const [contextOpen, setContextOpen] = useState(false);
+
+  const longPress = useLongPress({
+    onLongPress: () => {
+      if (isOwner) setContextOpen(true);
+    },
+  });
+
+  return (
+    <div className="relative group">
+      <button
+        onClick={() => {
+          if (!longPress.didLongPress.current) onSelect();
+        }}
+        {...(isOwner ? {
+          onTouchStart: longPress.onTouchStart,
+          onTouchEnd: longPress.onTouchEnd,
+          onTouchMove: longPress.onTouchMove,
+        } : {})}
+        className={`flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-2xl text-base md:text-lg font-semibold transition ${
+          isSelected
+            ? "bg-indigo-600"
+            : "bg-zinc-800 hover:bg-indigo-600"
+        }`}
+      >
+        {server.name.charAt(0).toUpperCase()}
+      </button>
+
+      {/* Desktop: hover ⋮ icon (owner only) */}
+      {isOwner && (
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            onClick={(e) => e.stopPropagation()}
+            className="absolute -top-1 -right-1 hidden md:flex h-5 w-5 items-center justify-center rounded-full bg-zinc-700 text-zinc-300 hover:bg-zinc-600 hover:text-white opacity-0 group-hover:opacity-100 transition"
+          >
+            <MoreVertical className="h-3 w-3" />
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent side="right" align="start" sideOffset={8}>
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
+            >
+              <Pencil size={14} />
+              <span>Edit</span>
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem
+              variant="destructive"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (confirm("Delete this server?")) {
+                  onDelete();
+                }
+              }}
+            >
+              <Trash2 size={14} />
+              <span>Delete</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+
+      {/* Mobile: long press context menu (owner only) */}
+      {isOwner && contextOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-50 flex items-end justify-center bg-black/50"
+          onClick={() => setContextOpen(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-t-2xl bg-zinc-800 p-4 pb-8 space-y-1"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-center text-sm text-zinc-400 mb-3">
+              {server.name}
+            </p>
+            <button
+              onClick={() => {
+                setContextOpen(false);
+                onEdit();
+              }}
+              className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-white hover:bg-zinc-700 transition"
+            >
+              <Pencil size={16} />
+              <span>Edit Server</span>
+            </button>
+            <button
+              onClick={() => {
+                setContextOpen(false);
+                if (confirm("Delete this server?")) {
+                  onDelete();
+                }
+              }}
+              className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-red-400 hover:bg-zinc-700 transition"
+            >
+              <Trash2 size={16} />
+              <span>Delete Server</span>
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ServerSidebar({
      selectedServerId,
      onSelectServer,
 }: ServerSidebarProps) {
+  const [editDialog, setEditDialog] = useState<{
+    open: boolean;
+    serverId: string;
+    serverName: string;
+  }>({
+    open: false,
+    serverId: "",
+    serverName: "",
+  });
+
   const {
     data: servers,
     isLoading,
@@ -40,7 +171,6 @@ export default function ServerSidebar({
   queryKey: ["current-user"],
   queryFn: getCurrentUser,
 });
-console.log("current user:", user); 
 
 const queryClient = useQueryClient();
 
@@ -91,34 +221,22 @@ const logoutMutation = useMutation({
 
       {/* Servers */}
       {servers?.map((server) => (
-  <div key={server.id} className="relative group">
-    <button
-      onClick={() => onSelectServer(server.id)}
-      className={`flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-2xl text-base md:text-lg font-semibold transition ${
-        selectedServerId === server.id
-          ? "bg-indigo-600"
-          : "bg-zinc-800 hover:bg-indigo-600"
-      }`}
-    >
-      {server.name.charAt(0).toUpperCase()}
-    </button>
-
-    {selectedServerId === server.id && (
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-
-          if (confirm("Delete this server?")) {
-            deleteMutation.mutate(server.id);
+        <ServerItem
+          key={server.id}
+          server={server}
+          isSelected={selectedServerId === server.id}
+          isOwner={user?.id === server.owner?.id}
+          onSelect={() => onSelectServer(server.id)}
+          onEdit={() =>
+            setEditDialog({
+              open: true,
+              serverId: server.id,
+              serverName: server.name,
+            })
           }
-        }}
-        className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-white hover:bg-red-700 md:opacity-0 md:group-hover:opacity-100 transition"
-      >
-        <Trash2 className="h-3 w-3" />
-      </button>
-    )}
-  </div>
-))}
+          onDelete={() => deleteMutation.mutate(server.id)}
+        />
+      ))}
       <ServerActions />
 
       <DropdownMenu>
@@ -152,6 +270,16 @@ const logoutMutation = useMutation({
     </DropdownMenuItem>
   </DropdownMenuContent>
 </DropdownMenu>
+
+      {/* Edit Server Dialog */}
+      <EditServerDialog
+        serverId={editDialog.serverId}
+        serverName={editDialog.serverName}
+        open={editDialog.open}
+        onOpenChange={(open) =>
+          setEditDialog((prev) => ({ ...prev, open }))
+        }
+      />
     </aside>
   );
 }

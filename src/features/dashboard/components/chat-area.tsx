@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { deleteMessage } from "@/features/message/api/delete-message";
 import {
   useMutation,
@@ -13,7 +13,16 @@ import { socket } from "@/lib/socket";
 import {
   getMessages,
   sendMessage,
+  editMessage,
 } from "@/features/message/api/message-api";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import type { Message } from "@/features/message/types";
 
@@ -29,6 +38,9 @@ export default function ChatArea({
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTypingRef = useRef(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState("");
 
   const queryClient = useQueryClient();
 
@@ -117,11 +129,49 @@ useEffect(() => {
   },
 });
 
+  const editMutation = useMutation({
+    mutationFn: ({ id, content }: { id: string; content: string }) =>
+      editMessage(id, { content }),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["messages", selectedChannelId],
+      });
+      setEditingId(null);
+      setEditContent("");
+    },
+
+    onError: (error) => {
+      console.error(error);
+    },
+  });
+
   const handleSend = () => {
     if (!selectedChannelId) return;
     if (!content.trim()) return;
 
     mutation.mutate(content);
+  };
+
+  const startEdit = (message: Message) => {
+    setEditingId(message.id);
+    setEditContent(message.content);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditContent("");
+  };
+
+  const saveEdit = (messageId: string) => {
+    if (!editContent.trim()) return;
+    editMutation.mutate({ id: messageId, content: editContent });
+  };
+
+  const handleDelete = (messageId: string) => {
+    if (confirm("Delete this message?")) {
+      deleteMutation.mutate(messageId);
+    }
   };
 
   if (!selectedChannelId) {
@@ -174,19 +224,81 @@ useEffect(() => {
         minute: "2-digit",
       })}
     </span>
-    {message.sender.id === user?.id && (
-    <button
-      onClick={() => deleteMutation.mutate(message.id)}
-      className="block md:hidden rounded p-1 text-red-400 hover:bg-zinc-700 hover:text-red-300 md:hidden md:group-hover:block"
-    >
-      <Trash2 size={15} />
-    </button>
+
+    {message.sender.id === user?.id && editingId !== message.id && (
+      <DropdownMenu>
+        <DropdownMenuTrigger>
+          <button className="rounded p-1 text-zinc-400 opacity-100 transition hover:bg-zinc-700 hover:text-white md:opacity-0 md:group-hover:opacity-100">
+            <MoreVertical size={15} />
+          </button>
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            className="cursor-pointer"
+            onClick={() => startEdit(message)}
+          >
+            <Pencil size={14} className="mr-2" />
+            Edit
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
+
+          <DropdownMenuItem
+            className="cursor-pointer text-red-500"
+            onClick={() => handleDelete(message.id)}
+          >
+            <Trash2 size={14} className="mr-2" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     )}
   </div>
 </div>
-<p className="mt-2 text-zinc-300">
-  {message.content}
-</p>
+
+{editingId === message.id ? (
+  <div className="mt-2 flex flex-col gap-2">
+    <textarea
+      value={editContent}
+      onChange={(e) => setEditContent(e.target.value)}
+      autoFocus
+      rows={2}
+      className="w-full resize-none rounded-lg bg-zinc-800 px-3 py-2 text-sm text-zinc-200 outline-none"
+      onKeyDown={(e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          saveEdit(message.id);
+        }
+
+        if (e.key === "Escape") {
+          cancelEdit();
+        }
+      }}
+    />
+
+    <div className="flex gap-2">
+      <button
+        onClick={() => saveEdit(message.id)}
+        disabled={editMutation.isPending}
+        className="rounded-md bg-indigo-600 px-3 py-1 text-xs font-medium text-white transition hover:bg-indigo-500 disabled:opacity-50"
+      >
+        {editMutation.isPending ? "Saving..." : "Save"}
+      </button>
+
+      <button
+        onClick={cancelEdit}
+        className="rounded-md bg-zinc-700 px-3 py-1 text-xs font-medium text-zinc-300 transition hover:bg-zinc-600"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+) : (
+  <p className="mt-2 text-zinc-300">
+    {message.content}
+  </p>
+)}
 </div>
             </div>
           ))

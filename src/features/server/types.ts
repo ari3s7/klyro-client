@@ -9,6 +9,10 @@ export interface Server {
   imageUrl?: string | null;
   createdAt: string;
   channels: Channel[];
+  owner: {
+    id: string;
+    username: string;
+  };
 }
 
 export interface JoinServerInput {
