@@ -86,7 +86,7 @@ export default function CreateChannelDialog({ serverId }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger >
-        <Button size="icon" className="h-8 w-8 rounded-lg">
+        <Button size="icon" className="h-8 w-8 rounded-sm border border-zinc-700 bg-zinc-800/60 text-zinc-400 hover:border-cyan-500/30 hover:text-cyan-400 hover:shadow-[0_0_10px_rgba(0,229,255,0.1)] transition-all">
           +
         </Button>
       </DialogTrigger>
@@ -98,13 +98,14 @@ export default function CreateChannelDialog({ serverId }: Props) {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div className="space-y-2">
+            <Label>Channel Name</Label>
             <Input
               placeholder="Channel Name"
               {...register("name")}
             />
 
             {errors.name && (
-              <p className="text-sm text-red-500">
+              <p className="text-xs text-red-400">
                 {errors.name.message}
               </p>
             )}
@@ -120,27 +121,35 @@ export default function CreateChannelDialog({ serverId }: Props) {
               }
               className="space-y-3"
             >
-              <div className="flex items-center space-x-3 rounded-lg border p-3">
+              <div className={`flex items-center space-x-3 rounded-sm border p-3 transition-all ${
+                selectedType === "TEXT"
+                  ? "border-cyan-500/20 bg-cyan-500/[0.04]"
+                  : "border-zinc-800 hover:border-zinc-700"
+              }`}>
                 <RadioGroupItem value="TEXT" id="text" />
                 <Label
                   htmlFor="text"
-                  className="cursor-pointer flex flex-col"
+                  className="cursor-pointer flex flex-col text-xs normal-case tracking-normal"
                 >
-                  <span>💬 Text Channel</span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-sm text-zinc-200">💬 Text Channel</span>
+                  <span className="text-[10px] text-zinc-500 mt-1">
                     Send messages, images and files.
                   </span>
                 </Label>
               </div>
 
-              <div className="flex items-center space-x-3 rounded-lg border p-3">
+              <div className={`flex items-center space-x-3 rounded-sm border p-3 transition-all ${
+                selectedType === "VOICE"
+                  ? "border-cyan-500/20 bg-cyan-500/[0.04]"
+                  : "border-zinc-800 hover:border-zinc-700"
+              }`}>
                 <RadioGroupItem value="VOICE" id="voice" />
                 <Label
                   htmlFor="voice"
-                  className="cursor-pointer flex flex-col"
+                  className="cursor-pointer flex flex-col text-xs normal-case tracking-normal"
                 >
-                  <span>🎤 Voice Channel</span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-sm text-zinc-200">🎤 Voice Channel</span>
+                  <span className="text-[10px] text-zinc-500 mt-1">
                     Join voice calls with members.
                   </span>
                 </Label>
@@ -148,7 +157,7 @@ export default function CreateChannelDialog({ serverId }: Props) {
             </RadioGroup>
 
             {errors.type && (
-              <p className="text-sm text-red-500">
+              <p className="text-xs text-red-400">
                 {errors.type.message}
               </p>
             )}
@@ -158,7 +167,7 @@ export default function CreateChannelDialog({ serverId }: Props) {
             <Button
               type="submit"
               disabled={mutation.isPending}
-              className="w-full"
+              className="w-full rounded-sm bg-cyan-400 font-heading text-[10px] font-bold uppercase tracking-[0.1em] text-black hover:bg-cyan-300 hover:shadow-[0_0_20px_rgba(0,229,255,0.2)]"
             >
               {mutation.isPending ? "Creating..." : "Create Channel"}
             </Button>

@@ -24,7 +24,7 @@ export default function ServerActions() {
         <DropdownMenuTrigger >
           <Button
             size="icon"
-            className="h-12 w-12 rounded-2xl bg-zinc-800 hover:bg-green-600"
+            className="h-10 w-10 md:h-12 md:w-12 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-400 hover:border-cyan-500/30 hover:bg-cyan-400 hover:text-black hover:shadow-[0_0_15px_rgba(0,229,255,0.15)] transition-all duration-200"
           >
             <Plus className="h-5 w-5" />
           </Button>

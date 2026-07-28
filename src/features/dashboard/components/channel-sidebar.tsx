@@ -89,12 +89,12 @@ export default function ChannelSidebar({
 
   if (!selectedServerId) {
     return (
-      <aside className="flex w-full flex-col border-r border-zinc-800 bg-zinc-900">
-        <div className="border-b border-zinc-800 p-4">
-          <h2 className="font-semibold">Select a Server</h2>
+      <aside className="flex w-full flex-col border-r border-zinc-800/50 bg-[#080a0c]">
+        <div className="border-b border-zinc-800/50 p-4">
+          <h2 className="font-heading text-xs uppercase tracking-[0.15em] text-zinc-500">Select a Server</h2>
         </div>
 
-        <div className="flex flex-1 items-center justify-center text-sm text-zinc-500">
+        <div className="flex flex-1 items-center justify-center px-4 text-center text-xs text-zinc-600">
           Select a server to view channels.
         </div>
       </aside>
@@ -102,23 +102,23 @@ export default function ChannelSidebar({
   }
 
   return (
-    <aside className="flex w-full flex-col border-r border-zinc-800 bg-zinc-900">
+    <aside className="flex w-full flex-col border-r border-zinc-800/50 bg-[#080a0c]">
       {/* Header */}
-<div className="border-b border-zinc-800 p-4">
+<div className="border-b border-zinc-800/50 p-4">
   <div className="flex items-start justify-between">
     <div className="flex-1">
-      <h2 className="text-lg font-semibold text-white">
+      <h2 className="font-heading text-sm font-bold uppercase tracking-[0.1em] text-white">
         {selectedServer?.name}
       </h2>
        <OnlineBadge />
 
-      <div className="mt-3 flex items-center justify-between rounded-lg bg-zinc-800 px-3 py-2">
+      <div className="mt-3 flex items-center justify-between rounded-sm border border-zinc-800 bg-zinc-900/40 px-3 py-2">
         <div>
-          <p className="text-xs text-zinc-400">
+          <p className="font-heading text-[9px] uppercase tracking-[0.2em] text-zinc-500">
             Invite Code
           </p>
 
-          <p className="font-mono text-sm tracking-wider text-white">
+          <p className="font-mono-body text-xs tracking-wider text-cyan-400">
             {selectedServer?.inviteCode}
           </p>
         </div>
@@ -127,7 +127,7 @@ export default function ChannelSidebar({
           onClick={() => {
             navigator.clipboard.writeText(selectedServer!.inviteCode);
           }}
-          className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-500"
+          className="rounded-sm bg-cyan-400 px-3 py-1.5 font-heading text-[10px] font-bold uppercase tracking-[0.1em] text-black transition-all duration-200 hover:bg-cyan-300 hover:shadow-[0_0_15px_rgba(0,229,255,0.2)]"
         >
           Copy
         </button>
@@ -144,13 +144,13 @@ export default function ChannelSidebar({
       {/* Channels */}
       <div className="flex-1 overflow-y-auto p-2">
         {isLoading && (
-          <p className="px-2 py-3 text-sm text-zinc-400">
+          <p className="px-2 py-3 text-xs text-zinc-600">
             Loading...
           </p>
         )}
 
         {isError && (
-          <p className="px-2 py-3 text-sm text-red-500">
+          <p className="px-2 py-3 text-xs text-red-500">
             Failed to load channels.
           </p>
         )}
@@ -183,7 +183,7 @@ export default function ChannelSidebar({
         ))}
 
         {!isLoading && channels?.length === 0 && (
-          <p className="px-2 py-3 text-sm text-zinc-500">
+          <p className="px-2 py-3 text-xs text-zinc-600">
             No channels found.
           </p>
         )}
@@ -192,14 +192,14 @@ export default function ChannelSidebar({
       {/* Mobile: long press context menu */}
       {mobileContext.open && (
         <div
-          className="md:hidden fixed inset-0 z-50 flex items-end justify-center bg-black/50"
+          className="md:hidden fixed inset-0 z-50 flex items-end justify-center bg-black/70"
           onClick={() => setMobileContext((prev) => ({ ...prev, open: false }))}
         >
           <div
-            className="w-full max-w-sm rounded-t-2xl bg-zinc-800 p-4 pb-8 space-y-1"
+            className="w-full max-w-sm rounded-t-2xl border-t border-cyan-500/10 bg-[#0a0f12] p-4 pb-8 space-y-1"
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="text-center text-sm text-zinc-400 mb-3">
+            <p className="text-center font-heading text-xs uppercase tracking-[0.15em] text-cyan-400 mb-3">
               {mobileContext.channelName}
             </p>
             <button
@@ -212,7 +212,7 @@ export default function ChannelSidebar({
                   channelType: mobileContext.channelType,
                 });
               }}
-              className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-white hover:bg-zinc-700 transition"
+              className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-zinc-300 hover:bg-zinc-800/60 transition"
             >
               <Pencil size={16} />
               <span>Edit Channel</span>
@@ -222,7 +222,7 @@ export default function ChannelSidebar({
                 setMobileContext((prev) => ({ ...prev, open: false }));
                 deleteMutation.mutate(mobileContext.channelId);
               }}
-              className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-red-400 hover:bg-zinc-700 transition"
+              className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-red-400 hover:bg-zinc-800/60 transition"
             >
               <Trash2 size={16} />
               <span>Delete Channel</span>
@@ -285,20 +285,20 @@ function ChannelItem({
         onTouchEnd: longPress.onTouchEnd,
         onTouchMove: longPress.onTouchMove,
       } : {})}
-      className={`group relative w-full rounded-lg px-3 py-3 md:py-2 text-left transition ${
+      className={`group relative w-full rounded-sm px-3 py-3 md:py-2 text-left transition-all duration-200 ${
         isSelected
-          ? "bg-zinc-700 text-white"
-          : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
+          ? "bg-cyan-500/[0.08] text-cyan-400 border-l-2 border-cyan-400"
+          : "text-zinc-500 hover:bg-zinc-800/40 hover:text-zinc-300"
       }`}
     >
       <div className="flex w-full items-center justify-between">
         <div className="flex items-center gap-2">
           {channel.type === "TEXT" ? (
-            <Hash size={16} />
+            <Hash size={14} className={isSelected ? "text-cyan-400" : ""} />
           ) : (
-            <Mic size={16} />
+            <Mic size={14} className={isSelected ? "text-cyan-400" : ""} />
           )}
-          <span>{channel.name}</span>
+          <span className="text-sm">{channel.name}</span>
         </div>
 
         {/* Desktop: hover ⋮ icon (owner only) */}
@@ -306,7 +306,7 @@ function ChannelItem({
           <DropdownMenu>
             <DropdownMenuTrigger
               onClick={(e) => e.stopPropagation()}
-              className="hidden md:block rounded p-1 text-zinc-400 transition hover:bg-zinc-700 hover:text-white opacity-0 group-hover:opacity-100"
+              className="hidden md:block rounded p-1 text-zinc-600 transition hover:text-cyan-400 opacity-0 group-hover:opacity-100"
             >
               <MoreVertical size={14} />
             </DropdownMenuTrigger>

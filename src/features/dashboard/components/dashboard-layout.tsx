@@ -26,9 +26,9 @@ const selectedChannel = selectedServer?.channels.find(
  useEffect(() => {
   console.log("Socket ready:", socket.id);
 }, []);
-console.log(selectedChannel);
+
  return (
-  <main className="flex h-screen bg-zinc-950 text-white overflow-hidden">
+  <main className="flex h-screen bg-[#050505] text-zinc-200 overflow-hidden">
     <div className="w-16 md:w-20 shrink-0">
       <ServerSidebar
         selectedServerId={selectedServerId}

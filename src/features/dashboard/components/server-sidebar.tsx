@@ -54,10 +54,10 @@ function ServerItem({ server, isSelected, isOwner, onSelect, onEdit, onDelete }:
           onTouchEnd: longPress.onTouchEnd,
           onTouchMove: longPress.onTouchMove,
         } : {})}
-        className={`flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-2xl text-base md:text-lg font-semibold transition ${
+        className={`flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-lg font-heading text-xs md:text-sm font-bold uppercase transition-all duration-200 ${
           isSelected
-            ? "bg-indigo-600"
-            : "bg-zinc-800 hover:bg-indigo-600"
+            ? "bg-cyan-400 text-black shadow-[0_0_20px_rgba(0,229,255,0.3)]"
+            : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:border-cyan-500/30 hover:text-cyan-400 hover:shadow-[0_0_15px_rgba(0,229,255,0.1)]"
         }`}
       >
         {server.name.charAt(0).toUpperCase()}
@@ -68,7 +68,7 @@ function ServerItem({ server, isSelected, isOwner, onSelect, onEdit, onDelete }:
         <DropdownMenu>
           <DropdownMenuTrigger
             onClick={(e) => e.stopPropagation()}
-            className="absolute -top-1 -right-1 hidden md:flex h-5 w-5 items-center justify-center rounded-full bg-zinc-700 text-zinc-300 hover:bg-zinc-600 hover:text-white opacity-0 group-hover:opacity-100 transition"
+            className="absolute -top-1 -right-1 hidden md:flex h-5 w-5 items-center justify-center rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400 hover:border-cyan-500/40 hover:text-cyan-400 opacity-0 group-hover:opacity-100 transition-all"
           >
             <MoreVertical className="h-3 w-3" />
           </DropdownMenuTrigger>
@@ -105,14 +105,14 @@ function ServerItem({ server, isSelected, isOwner, onSelect, onEdit, onDelete }:
       {/* Mobile: long press context menu (owner only) */}
       {isOwner && contextOpen && (
         <div
-          className="md:hidden fixed inset-0 z-50 flex items-end justify-center bg-black/50"
+          className="md:hidden fixed inset-0 z-50 flex items-end justify-center bg-black/70"
           onClick={() => setContextOpen(false)}
         >
           <div
-            className="w-full max-w-sm rounded-t-2xl bg-zinc-800 p-4 pb-8 space-y-1"
+            className="w-full max-w-sm rounded-t-2xl border-t border-cyan-500/10 bg-[#0a0f12] p-4 pb-8 space-y-1"
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="text-center text-sm text-zinc-400 mb-3">
+            <p className="text-center font-heading text-xs uppercase tracking-[0.15em] text-cyan-400 mb-3">
               {server.name}
             </p>
             <button
@@ -120,7 +120,7 @@ function ServerItem({ server, isSelected, isOwner, onSelect, onEdit, onDelete }:
                 setContextOpen(false);
                 onEdit();
               }}
-              className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-white hover:bg-zinc-700 transition"
+              className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-zinc-300 hover:bg-zinc-800/60 transition"
             >
               <Pencil size={16} />
               <span>Edit Server</span>
@@ -132,7 +132,7 @@ function ServerItem({ server, isSelected, isOwner, onSelect, onEdit, onDelete }:
                   onDelete();
                 }
               }}
-              className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-red-400 hover:bg-zinc-700 transition"
+              className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-red-400 hover:bg-zinc-800/60 transition"
             >
               <Trash2 size={16} />
               <span>Delete Server</span>
@@ -206,10 +206,10 @@ const logoutMutation = useMutation({
 },
 });
   return (
-    <aside className="flex h-full w-full flex-col items-center gap-3 border-r border-zinc-800 bg-zinc-900 py-3">
+    <aside className="flex h-full w-full flex-col items-center gap-3 border-r border-zinc-800/50 bg-[#080a0c] py-3">
       {/* Loading */}
       {isLoading && (
-        <p className="text-xs text-zinc-400">...</p>
+        <p className="text-xs text-zinc-600">...</p>
       )}
 
       {/* Error */}
@@ -241,7 +241,7 @@ const logoutMutation = useMutation({
 
       <DropdownMenu>
   <DropdownMenuTrigger>
-  <button className="mt-auto flex h-10 w-10 md:h-12 md:w-12 items-center justify-center overflow-hidden rounded-full bg-indigo-600 text-base md:text-lg font-semibold text-white hover:bg-indigo-500 transition">
+  <button className="mt-auto flex h-10 w-10 md:h-12 md:w-12 items-center justify-center overflow-hidden rounded-lg border border-cyan-500/20 bg-[#0a0f12] font-heading text-xs md:text-sm font-bold text-cyan-400 hover:border-cyan-500/40 hover:shadow-[0_0_15px_rgba(0,229,255,0.1)] transition-all duration-200">
     {user?.avatar ? (
       <img
         src={user.avatar}

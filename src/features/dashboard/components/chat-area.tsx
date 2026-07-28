@@ -176,32 +176,41 @@ useEffect(() => {
 
   if (!selectedChannelId) {
     return (
-      <section className="flex flex-1 items-center justify-center bg-zinc-950 text-zinc-500">
-        Select a channel to start chatting.
+      <section className="relative flex flex-1 items-center justify-center overflow-hidden bg-[#050505] text-zinc-600">
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-950/[0.08] via-transparent to-teal-950/[0.05]" />
+        <div className="absolute right-0 top-0 h-[300px] w-[300px] rounded-full bg-cyan-500/[0.03] blur-[100px]" />
+        <div className="relative z-10 text-center">
+          <p className="font-heading text-xs uppercase tracking-[0.2em]">No channel selected</p>
+          <p className="mt-2 text-xs text-zinc-700">Select a channel to start chatting.</p>
+        </div>
       </section>
     );
   }
 
   return (
-    <section className="flex flex-1 flex-col bg-zinc-950">
+    <section className="relative flex flex-1 flex-col overflow-hidden bg-[#050505]">
+      {/* Subtle gradient overlay */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-cyan-950/[0.06] via-transparent to-teal-950/[0.04]" />
+      <div className="pointer-events-none absolute right-0 top-0 h-[400px] w-[400px] rounded-full bg-cyan-500/[0.02] blur-[120px]" />
+
       {/* Header */}
-      <header className="flex h-16 items-center border-b border-zinc-800 px-6">
-        <h2 className="font-semibold">Channel Chat</h2>
+      <header className="flex h-14 items-center border-b border-zinc-800/50 px-6">
+        <h2 className="font-heading text-xs font-bold uppercase tracking-[0.15em] text-zinc-400">Channel Chat</h2>
       </header>
 
       {/* Messages */}
-      <div className="flex-1 space-y-4 overflow-y-auto p-6">
+      <div className="flex-1 space-y-3 overflow-y-auto p-4 md:p-6">
         {isLoading ? (
-          <p className="text-zinc-400">Loading...</p>
+          <p className="text-xs text-zinc-600">Loading...</p>
         ) : messages.length === 0 ? (
-          <p className="text-center text-zinc-500">
+          <p className="text-center text-xs text-zinc-700">
             No messages yet.
           </p>
         ) : (
           messages.map((message) => (
             <div
               key={message.id}
-              className="group relative flex gap-3 rounded-lg bg-zinc-900 p-3"
+              className="group relative flex gap-3 rounded-sm border border-zinc-800/30 bg-zinc-900/30 p-3 transition-colors hover:border-zinc-800/50"
             >
               <img
     src={
@@ -209,16 +218,16 @@ useEffect(() => {
       `https://api.dicebear.com/9.x/thumbs/svg?seed=${message.sender.username}`
     }
     alt={message.sender.username}
-    className="h-9 w-9 shrink-0 rounded-full bg-zinc-800"
+    className="h-8 w-8 shrink-0 rounded-sm bg-zinc-800 border border-zinc-700/50"
   />
               <div className="flex-1">
     <div className="flex items-center justify-between">
-      <p className="font-semibold">
+      <p className="font-heading text-xs font-bold uppercase tracking-[0.05em] text-zinc-300">
         {message.sender.username}
       </p>
 
   <div className="flex items-center gap-2">
-    <span className="text-xs text-zinc-500">
+    <span className="text-[10px] text-zinc-600">
       {new Date(message.createdAt).toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
@@ -228,8 +237,8 @@ useEffect(() => {
     {message.sender.id === user?.id && editingId !== message.id && (
       <DropdownMenu>
         <DropdownMenuTrigger>
-          <button className="rounded p-1 text-zinc-400 opacity-100 transition hover:bg-zinc-700 hover:text-white md:opacity-0 md:group-hover:opacity-100">
-            <MoreVertical size={15} />
+          <button className="rounded p-1 text-zinc-600 opacity-100 transition hover:text-cyan-400 md:opacity-0 md:group-hover:opacity-100">
+            <MoreVertical size={14} />
           </button>
         </DropdownMenuTrigger>
 
@@ -264,7 +273,7 @@ useEffect(() => {
       onChange={(e) => setEditContent(e.target.value)}
       autoFocus
       rows={2}
-      className="w-full resize-none rounded-lg bg-zinc-800 px-3 py-2 text-sm text-zinc-200 outline-none"
+      className="w-full resize-none rounded-sm border border-zinc-700 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-200 outline-none transition-all focus:border-cyan-500/40"
       onKeyDown={(e) => {
         if (e.key === "Enter" && !e.shiftKey) {
           e.preventDefault();
@@ -281,21 +290,21 @@ useEffect(() => {
       <button
         onClick={() => saveEdit(message.id)}
         disabled={editMutation.isPending}
-        className="rounded-md bg-indigo-600 px-3 py-1 text-xs font-medium text-white transition hover:bg-indigo-500 disabled:opacity-50"
+        className="rounded-sm bg-cyan-400 px-3 py-1 font-heading text-[10px] font-bold uppercase tracking-[0.1em] text-black transition-all hover:bg-cyan-300 disabled:opacity-50"
       >
         {editMutation.isPending ? "Saving..." : "Save"}
       </button>
 
       <button
         onClick={cancelEdit}
-        className="rounded-md bg-zinc-700 px-3 py-1 text-xs font-medium text-zinc-300 transition hover:bg-zinc-600"
+        className="rounded-sm border border-zinc-700 bg-zinc-800/60 px-3 py-1 text-xs text-zinc-400 transition hover:border-zinc-600"
       >
         Cancel
       </button>
     </div>
   </div>
 ) : (
-  <p className="mt-2 text-zinc-300">
+  <p className="mt-1 text-sm leading-relaxed text-zinc-400">
     {message.content}
   </p>
 )}
@@ -307,9 +316,9 @@ useEffect(() => {
       </div>
 
       {/* Input */}
-      <div className="border-t border-zinc-800 p-4">
+      <div className="border-t border-zinc-800/50 p-4">
         {typingUser && (
-  <p className="mb-2 text-sm italic text-zinc-400">
+  <p className="mb-2 text-xs italic text-cyan-500/60">
     {typingUser} is typing...
   </p>
 )}
@@ -342,7 +351,7 @@ useEffect(() => {
   }, 2000);
 }}
             placeholder="Type a message..."
-            className="flex-1 rounded-lg bg-zinc-800 px-4 py-3 text-sm outline-none"
+            className="flex-1 rounded-sm border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm outline-none transition-all placeholder:text-zinc-600 focus:border-cyan-500/30 focus:shadow-[0_0_15px_rgba(0,229,255,0.05)]"
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 handleSend();
@@ -353,7 +362,7 @@ useEffect(() => {
           <button
             onClick={handleSend}
             disabled={mutation.isPending}
-            className="rounded-lg bg-indigo-600 px-5 py-3 hover:bg-indigo-500 disabled:opacity-50"
+            className="rounded-sm bg-cyan-400 px-5 py-3 font-heading text-xs font-bold uppercase tracking-[0.1em] text-black transition-all duration-200 hover:bg-cyan-300 hover:shadow-[0_0_20px_rgba(0,229,255,0.2)] disabled:opacity-50"
           >
             {mutation.isPending ? "..." : "Send"}
           </button>

@@ -60,7 +60,6 @@ export default function EditChannelDialog({
     },
   });
 
-  // Sync form values when the dialog opens with new channel data
   useEffect(() => {
     if (open) {
       reset({ name: channelName, type: channelType });
@@ -96,13 +95,14 @@ export default function EditChannelDialog({
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div className="space-y-2">
+            <Label>Channel Name</Label>
             <Input
               placeholder="Channel Name"
               {...register("name")}
             />
 
             {errors.name && (
-              <p className="text-sm text-red-500">
+              <p className="text-xs text-red-400">
                 {errors.name.message}
               </p>
             )}
@@ -118,27 +118,35 @@ export default function EditChannelDialog({
               }
               className="space-y-3"
             >
-              <div className="flex items-center space-x-3 rounded-lg border p-3">
+              <div className={`flex items-center space-x-3 rounded-sm border p-3 transition-all ${
+                selectedType === "TEXT"
+                  ? "border-cyan-500/20 bg-cyan-500/[0.04]"
+                  : "border-zinc-800 hover:border-zinc-700"
+              }`}>
                 <RadioGroupItem value="TEXT" id="edit-text" />
                 <Label
                   htmlFor="edit-text"
-                  className="cursor-pointer flex flex-col"
+                  className="cursor-pointer flex flex-col text-xs normal-case tracking-normal"
                 >
-                  <span>💬 Text Channel</span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-sm text-zinc-200">💬 Text Channel</span>
+                  <span className="text-[10px] text-zinc-500 mt-1">
                     Send messages, images and files.
                   </span>
                 </Label>
               </div>
 
-              <div className="flex items-center space-x-3 rounded-lg border p-3">
+              <div className={`flex items-center space-x-3 rounded-sm border p-3 transition-all ${
+                selectedType === "VOICE"
+                  ? "border-cyan-500/20 bg-cyan-500/[0.04]"
+                  : "border-zinc-800 hover:border-zinc-700"
+              }`}>
                 <RadioGroupItem value="VOICE" id="edit-voice" />
                 <Label
                   htmlFor="edit-voice"
-                  className="cursor-pointer flex flex-col"
+                  className="cursor-pointer flex flex-col text-xs normal-case tracking-normal"
                 >
-                  <span>🎤 Voice Channel</span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-sm text-zinc-200">🎤 Voice Channel</span>
+                  <span className="text-[10px] text-zinc-500 mt-1">
                     Join voice calls with members.
                   </span>
                 </Label>
@@ -146,7 +154,7 @@ export default function EditChannelDialog({
             </RadioGroup>
 
             {errors.type && (
-              <p className="text-sm text-red-500">
+              <p className="text-xs text-red-400">
                 {errors.type.message}
               </p>
             )}
@@ -156,7 +164,7 @@ export default function EditChannelDialog({
             <Button
               type="submit"
               disabled={mutation.isPending}
-              className="w-full"
+              className="w-full rounded-sm bg-cyan-400 font-heading text-[10px] font-bold uppercase tracking-[0.1em] text-black hover:bg-cyan-300 hover:shadow-[0_0_20px_rgba(0,229,255,0.2)]"
             >
               {mutation.isPending ? "Saving..." : "Save Changes"}
             </Button>
