@@ -1,0 +1,51 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: frontend-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy Frontend to Azure VM
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.AZURE_HOST }}
+          username: ${{ secrets.AZURE_USER }}
+          key: ${{ secrets.AZURE_SSH_KEY }}
+
+          script: |
+            set -e
+
+            export PATH="$PATH:/home/azureuser/.npm-global/bin"
+
+            cd ~/klyro-client
+
+            echo "Pulling latest code..."
+            git fetch origin
+            git reset --hard origin/main
+
+            echo "Installing dependencies..."
+            npm ci
+
+            echo "Building frontend..."
+            npm run build
+
+            echo "Deploying frontend..."
+            sudo rsync -a --delete dist/ /var/www/klyro/
+
+            echo "Reloading Nginx..."
+            sudo systemctl reload nginx
+
+            echo "Frontend deployment complete!"
