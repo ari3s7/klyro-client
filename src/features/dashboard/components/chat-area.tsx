@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, Paperclip, X, Loader2, Image as ImageIcon, Film } from "lucide-react";
 import { deleteMessage } from "@/features/message/api/delete-message";
 import { UserProfileCard } from "@/features/user/components/user-profile-card";
 import {
@@ -7,7 +7,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { getCurrentUser } from "@/features/auth/api/get-current-user"
+import { getCurrentUser } from "@/features/auth/api/get-current-user";
 
 import { socket } from "@/lib/socket";
 
@@ -15,6 +15,7 @@ import {
   getMessages,
   sendMessage,
   editMessage,
+  uploadFile,
 } from "@/features/message/api/message-api";
 
 import {
@@ -25,7 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import type { Message } from "@/features/message/types";
+import type { Attachment, Message } from "@/features/message/types";
 
 interface ChatAreaProps {
   selectedChannelId: string | null;
@@ -39,10 +40,14 @@ export default function ChatArea({
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTypingRef = useRef(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [profileCard, setProfileCard] = useState<{ userId: string; rect: DOMRect } | null>(null);
+
+  const [pendingAttachment, setPendingAttachment] = useState<Attachment | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -51,64 +56,64 @@ export default function ChatArea({
     queryFn: () => getMessages(selectedChannelId!),
     enabled: !!selectedChannelId,
   });
+
   const { data: user } = useQuery({
-  queryKey: ["current-user"],
-  queryFn: getCurrentUser,
-});
+    queryKey: ["current-user"],
+    queryFn: getCurrentUser,
+  });
 
   useEffect(() => {
-  if (!selectedChannelId) return;
+    if (!selectedChannelId) return;
 
-  socket.emit("join-channel", selectedChannelId);
+    socket.emit("join-channel", selectedChannelId);
 
-  return () => {
-    socket.emit("leave-channel", selectedChannelId);
-  };
-}, [selectedChannelId]);
+    return () => {
+      socket.emit("leave-channel", selectedChannelId);
+    };
+  }, [selectedChannelId]);
 
-useEffect(() => {
-  if (!selectedChannelId) return;
+  useEffect(() => {
+    if (!selectedChannelId) return;
 
-  const handleNewMessage = (message: Message) => {
-    queryClient.setQueryData<Message[]>(
-      ["messages", selectedChannelId],
-      (old = []) => [...old, message]
-    );
-  };
+    const handleNewMessage = (message: Message) => {
+      queryClient.setQueryData<Message[]>(
+        ["messages", selectedChannelId],
+        (old = []) => [...old, message]
+      );
+    };
 
-  const handleTypingStart = ({ username }: { username: string }) => {
-    setTypingUser(username);
-  };
+    const handleTypingStart = ({ username }: { username: string }) => {
+      setTypingUser(username);
+    };
 
-  const handleTypingStop = () => {
-    setTypingUser(null);
-  };
+    const handleTypingStop = () => {
+      setTypingUser(null);
+    };
 
-  socket.on("message-created", handleNewMessage);
-  socket.on("typing-start", handleTypingStart);
-  socket.on("typing-stop", handleTypingStop);
+    socket.on("message-created", handleNewMessage);
+    socket.on("typing-start", handleTypingStart);
+    socket.on("typing-stop", handleTypingStop);
 
-  return () => {
-    socket.off("message-created", handleNewMessage);
-    socket.off("typing-start", handleTypingStart);
-    socket.off("typing-stop", handleTypingStop);
-  };
-}, [selectedChannelId, queryClient]);
+    return () => {
+      socket.off("message-created", handleNewMessage);
+      socket.off("typing-start", handleTypingStart);
+      socket.off("typing-stop", handleTypingStop);
+    };
+  }, [selectedChannelId, queryClient]);
 
-useEffect(() => {
-  bottomRef.current?.scrollIntoView({
-    behavior: "smooth",
-  });
-}, [messages]);
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }, [messages]);
 
   const mutation = useMutation({
-    mutationFn: (content: string) =>
-      sendMessage(selectedChannelId!, {
-        content,
-      }),
+    mutationFn: (data: { content?: string; attachments?: Attachment[] }) =>
+      sendMessage(selectedChannelId!, data),
 
     onSuccess: () => {
       setContent("");
+      setPendingAttachment(null);
     },
 
     onError: (error) => {
@@ -117,18 +122,18 @@ useEffect(() => {
   });
 
   const deleteMutation = useMutation({
-  mutationFn: deleteMessage,
+    mutationFn: deleteMessage,
 
-  onSuccess: () => {
-    queryClient.invalidateQueries({
-      queryKey: ["messages", selectedChannelId],
-    });
-  },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["messages", selectedChannelId],
+      });
+    },
 
-  onError: (error) => {
-    console.error(error);
-  },
-});
+    onError: (error) => {
+      console.error(error);
+    },
+  });
 
   const editMutation = useMutation({
     mutationFn: ({ id, content }: { id: string; content: string }) =>
@@ -147,16 +152,41 @@ useEffect(() => {
     },
   });
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploading(true);
+      const res = await uploadFile(file);
+      setPendingAttachment({
+        url: res.url,
+        fileName: res.fileName,
+        mimeType: res.mimeType,
+        size: res.size,
+      });
+    } catch (err) {
+      console.error("Failed to upload media:", err);
+      alert("Failed to upload file. Please try again.");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const handleSend = () => {
     if (!selectedChannelId) return;
-    if (!content.trim()) return;
+    if (!content.trim() && !pendingAttachment) return;
 
-    mutation.mutate(content);
+    mutation.mutate({
+      content: content.trim() || undefined,
+      attachments: pendingAttachment ? [pendingAttachment] : undefined,
+    });
   };
 
   const startEdit = (message: Message) => {
     setEditingId(message.id);
-    setEditContent(message.content);
+    setEditContent(message.content || "");
   };
 
   const cancelEdit = () => {
@@ -214,108 +244,138 @@ useEffect(() => {
               className="group relative flex gap-3 rounded-sm border border-zinc-800/30 bg-zinc-900/30 p-3 transition-colors hover:border-zinc-800/50"
             >
               <img
-    src={
-      message.sender.avatar ||
-      `https://api.dicebear.com/9.x/thumbs/svg?seed=${message.sender.username}`
-    }
-    alt={message.sender.username}
-    onClick={(e) =>
-      setProfileCard({
-        userId: message.sender.id,
-        rect: e.currentTarget.getBoundingClientRect(),
-      })
-    }
-    className="h-8 w-8 shrink-0 cursor-pointer rounded-sm bg-zinc-800 border border-zinc-700/50 transition hover:border-cyan-500/40"
-  />
-              <div className="flex-1">
-    <div className="flex items-center justify-between">
-      <p className="font-heading text-xs font-bold uppercase tracking-[0.05em] text-zinc-300">
-        {message.sender.username}
-      </p>
+                src={
+                  message.sender.avatar ||
+                  `https://api.dicebear.com/9.x/thumbs/svg?seed=${message.sender.username}`
+                }
+                alt={message.sender.username}
+                onClick={(e) =>
+                  setProfileCard({
+                    userId: message.sender.id,
+                    rect: e.currentTarget.getBoundingClientRect(),
+                  })
+                }
+                className="h-8 w-8 shrink-0 cursor-pointer rounded-sm bg-zinc-800 border border-zinc-700/50 transition hover:border-cyan-500/40"
+              />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <p className="font-heading text-xs font-bold uppercase tracking-[0.05em] text-zinc-300">
+                    {message.sender.username}
+                  </p>
 
-  <div className="flex items-center gap-2">
-    <span className="text-[10px] text-zinc-600">
-      {new Date(message.createdAt).toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      })}
-    </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-zinc-600">
+                      {new Date(message.createdAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
 
-    {message.sender.id === user?.id && editingId !== message.id && (
-      <DropdownMenu>
-        <DropdownMenuTrigger>
-          <button className="rounded p-1 text-zinc-600 opacity-100 transition hover:text-cyan-400 md:opacity-0 md:group-hover:opacity-100">
-            <MoreVertical size={14} />
-          </button>
-        </DropdownMenuTrigger>
+                    {message.sender.id === user?.id && editingId !== message.id && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger>
+                          <button className="rounded p-1 text-zinc-600 opacity-100 transition hover:text-cyan-400 md:opacity-0 md:group-hover:opacity-100">
+                            <MoreVertical size={14} />
+                          </button>
+                        </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            className="cursor-pointer"
-            onClick={() => startEdit(message)}
-          >
-            <Pencil size={14} className="mr-2" />
-            Edit
-          </DropdownMenuItem>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            className="cursor-pointer"
+                            onClick={() => startEdit(message)}
+                          >
+                            <Pencil size={14} className="mr-2" />
+                            Edit
+                          </DropdownMenuItem>
 
-          <DropdownMenuSeparator />
+                          <DropdownMenuSeparator />
 
-          <DropdownMenuItem
-            className="cursor-pointer text-red-500"
-            onClick={() => handleDelete(message.id)}
-          >
-            <Trash2 size={14} className="mr-2" />
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    )}
-  </div>
-</div>
+                          <DropdownMenuItem
+                            className="cursor-pointer text-red-500"
+                            onClick={() => handleDelete(message.id)}
+                          >
+                            <Trash2 size={14} className="mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
+                </div>
 
-{editingId === message.id ? (
-  <div className="mt-2 flex flex-col gap-2">
-    <textarea
-      value={editContent}
-      onChange={(e) => setEditContent(e.target.value)}
-      autoFocus
-      rows={2}
-      className="w-full resize-none rounded-sm border border-zinc-700 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-200 outline-none transition-all focus:border-cyan-500/40"
-      onKeyDown={(e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault();
-          saveEdit(message.id);
-        }
+                {editingId === message.id ? (
+                  <div className="mt-2 flex flex-col gap-2">
+                    <textarea
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      autoFocus
+                      rows={2}
+                      className="w-full resize-none rounded-sm border border-zinc-700 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-200 outline-none transition-all focus:border-cyan-500/40"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          saveEdit(message.id);
+                        }
 
-        if (e.key === "Escape") {
-          cancelEdit();
-        }
-      }}
-    />
+                        if (e.key === "Escape") {
+                          cancelEdit();
+                        }
+                      }}
+                    />
 
-    <div className="flex gap-2">
-      <button
-        onClick={() => saveEdit(message.id)}
-        disabled={editMutation.isPending}
-        className="rounded-sm bg-cyan-400 px-3 py-1 font-heading text-[10px] font-bold uppercase tracking-[0.1em] text-black transition-all hover:bg-cyan-300 disabled:opacity-50"
-      >
-        {editMutation.isPending ? "Saving..." : "Save"}
-      </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => saveEdit(message.id)}
+                        disabled={editMutation.isPending}
+                        className="rounded-sm bg-cyan-400 px-3 py-1 font-heading text-[10px] font-bold uppercase tracking-[0.1em] text-black transition-all hover:bg-cyan-300 disabled:opacity-50"
+                      >
+                        {editMutation.isPending ? "Saving..." : "Save"}
+                      </button>
 
-      <button
-        onClick={cancelEdit}
-        className="rounded-sm border border-zinc-700 bg-zinc-800/60 px-3 py-1 text-xs text-zinc-400 transition hover:border-zinc-600"
-      >
-        Cancel
-      </button>
-    </div>
-  </div>
-) : (
-  <p className="mt-1 text-sm leading-relaxed text-zinc-400">
-    {message.content}
-  </p>
-)}
-</div>
+                      <button
+                        onClick={cancelEdit}
+                        className="rounded-sm border border-zinc-700 bg-zinc-800/60 px-3 py-1 text-xs text-zinc-400 transition hover:border-zinc-600"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {message.content && (
+                      <p className="mt-1 text-sm leading-relaxed text-zinc-300 break-words">
+                        {message.content}
+                      </p>
+                    )}
+
+                    {message.attachments && message.attachments.length > 0 && (
+                      <div className="mt-2.5 flex flex-wrap gap-3">
+                        {message.attachments.map((att, idx) => {
+                          const isVideo = att.mimeType?.startsWith("video/") || att.url.endsWith(".mp4") || att.url.endsWith(".webm");
+                          return isVideo ? (
+                            <div key={att.id || idx} className="relative overflow-hidden rounded-md border border-cyan-500/30 bg-black/60 shadow-[0_0_15px_rgba(0,0,0,0.5)]">
+                              <video
+                                src={att.url}
+                                controls
+                                className="max-h-72 max-w-full md:max-w-md rounded-md object-contain"
+                              />
+                            </div>
+                          ) : (
+                            <div key={att.id || idx} className="group/img relative overflow-hidden rounded-md border border-cyan-500/30 bg-zinc-950/60 shadow-[0_0_15px_rgba(0,0,0,0.5)]">
+                              <img
+                                src={att.url}
+                                alt={att.fileName || "Uploaded media"}
+                                className="max-h-72 max-w-full md:max-w-md rounded-md object-cover transition-all duration-200 cursor-pointer hover:opacity-90 active:scale-[0.99]"
+                                onClick={() => window.open(att.url, "_blank")}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           ))
         )}
@@ -323,44 +383,87 @@ useEffect(() => {
       </div>
 
       {/* Input */}
-      <div className="border-t border-zinc-800/50 p-4">
+      <div className="border-t border-zinc-800/50 p-4 bg-[#06080a]">
         {typingUser && (
-  <p className="mb-2 text-xs italic text-cyan-500/60">
-    {typingUser} is typing...
-  </p>
-)}
-        <div className="flex gap-3">
+          <p className="mb-2 text-xs italic text-cyan-500/60">
+            {typingUser} is typing...
+          </p>
+        )}
+
+        {/* Attachment preview banner */}
+        {pendingAttachment && (
+          <div className="mb-3 flex items-center gap-2 rounded-md border border-cyan-500/30 bg-cyan-950/20 px-3 py-2 text-xs text-cyan-300">
+            {pendingAttachment.mimeType.startsWith("video/") ? (
+              <Film size={14} className="shrink-0 text-cyan-400" />
+            ) : (
+              <ImageIcon size={14} className="shrink-0 text-cyan-400" />
+            )}
+            <span className="truncate font-medium">{pendingAttachment.fileName}</span>
+            <button
+              onClick={() => setPendingAttachment(null)}
+              className="ml-auto rounded p-1 text-zinc-400 hover:bg-zinc-800 hover:text-white transition"
+              title="Remove attachment"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+
+        <div className="flex gap-2.5 items-center">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+            accept="image/*,video/*"
+            className="hidden"
+          />
+
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            title="Attach image or video"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm border border-zinc-800 bg-zinc-900/60 text-zinc-400 transition hover:border-cyan-500/40 hover:text-cyan-400 hover:bg-cyan-500/10 active:scale-95 disabled:opacity-50"
+          >
+            {isUploading ? (
+              <Loader2 size={18} className="animate-spin text-cyan-400" />
+            ) : (
+              <Paperclip size={18} />
+            )}
+          </button>
+
           <input
             value={content}
             onChange={(e) => {
-  setContent(e.target.value);
+              setContent(e.target.value);
 
-  if (!isTypingRef.current) {
-    socket.emit("typing-start", {
-      channelId: selectedChannelId,
-      username: user?.username,
-    });
+              if (!isTypingRef.current) {
+                socket.emit("typing-start", {
+                  channelId: selectedChannelId,
+                  username: user?.username,
+                });
 
-    isTypingRef.current = true;
-  }
+                isTypingRef.current = true;
+              }
 
-  if (typingTimeoutRef.current) {
-    clearTimeout(typingTimeoutRef.current);
-  }
+              if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current);
+              }
 
-  typingTimeoutRef.current = setTimeout(() => {
-    socket.emit("typing-stop", {
-      channelId: selectedChannelId,
-      username: user?.username,
-    });
+              typingTimeoutRef.current = setTimeout(() => {
+                socket.emit("typing-stop", {
+                  channelId: selectedChannelId,
+                  username: user?.username,
+                });
 
-    isTypingRef.current = false;
-  }, 2000);
-}}
-            placeholder="Type a message..."
-            className="flex-1 rounded-sm border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm outline-none transition-all placeholder:text-zinc-600 focus:border-cyan-500/30 focus:shadow-[0_0_15px_rgba(0,229,255,0.05)]"
+                isTypingRef.current = false;
+              }, 2000);
+            }}
+            placeholder="Type a message or attach media..."
+            className="flex-1 rounded-sm border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm text-zinc-200 outline-none transition-all placeholder:text-zinc-600 focus:border-cyan-500/30 focus:shadow-[0_0_15px_rgba(0,229,255,0.05)]"
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
                 handleSend();
               }
             }}
@@ -368,8 +471,8 @@ useEffect(() => {
 
           <button
             onClick={handleSend}
-            disabled={mutation.isPending}
-            className="rounded-sm bg-cyan-400 px-5 py-3 font-heading text-xs font-bold uppercase tracking-[0.1em] text-black transition-all duration-200 hover:bg-cyan-300 hover:shadow-[0_0_20px_rgba(0,229,255,0.2)] disabled:opacity-50"
+            disabled={mutation.isPending || isUploading || (!content.trim() && !pendingAttachment)}
+            className="rounded-sm bg-cyan-400 px-5 py-3 font-heading text-xs font-bold uppercase tracking-[0.1em] text-black transition-all duration-200 hover:bg-cyan-300 hover:shadow-[0_0_20px_rgba(0,229,255,0.2)] active:scale-95 disabled:opacity-50 shrink-0"
           >
             {mutation.isPending ? "..." : "Send"}
           </button>

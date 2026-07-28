@@ -1,5 +1,5 @@
 import { api } from "@/lib/axios";
-import type { Message } from "../types";
+import type { Attachment, Message } from "../types";
 
 export const getMessages = async (
   channelId: string
@@ -11,8 +11,31 @@ export const getMessages = async (
   return response.data.data;
 };
 
-interface SendMessageInput {
-  content: string;
+export interface UploadFileResult {
+  url: string;
+  fileName: string;
+  mimeType: string;
+  size: number;
+  type: "IMAGE" | "VIDEO" | "FILE";
+}
+
+export const uploadFile = async (file: File): Promise<UploadFileResult> => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await api.post("/attachments/upload", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  return response.data.data;
+};
+
+export interface SendMessageInput {
+  content?: string;
+  type?: "TEXT" | "IMAGE" | "VIDEO" | "FILE" | "AUDIO";
+  attachments?: Attachment[];
 }
 
 export const sendMessage = async (

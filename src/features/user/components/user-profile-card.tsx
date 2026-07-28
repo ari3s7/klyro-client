@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
-import { Pencil, LogOut } from "lucide-react";
+import { Pencil, LogOut, Clock } from "lucide-react";
 import { getUserProfile } from "../api/get-user-profile";
 import { updateUserProfile } from "../api/update-user-profile";
 import { getCurrentUser } from "@/features/auth/api/get-current-user";
+import { formatLastSeen } from "@/lib/date-utils";
 
 type UserProfileCardProps = {
   userId: string;
@@ -101,7 +102,7 @@ export function UserProfileCard({ userId, anchorRect, onClose, onLogout }: UserP
                 />
                 <span
                   className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#0a0f12] ${
-                    profile.isOnline ? "bg-green-500" : "bg-zinc-600"
+                    profile.isOnline ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" : "bg-zinc-600"
                   }`}
                 />
               </div>
@@ -109,9 +110,19 @@ export function UserProfileCard({ userId, anchorRect, onClose, onLogout }: UserP
                 <p className="font-heading text-sm font-bold uppercase tracking-[0.05em] text-zinc-200 truncate">
                   {profile.username}
                 </p>
-                <p className="text-[11px] text-zinc-500">
-                  {profile.isOnline ? "Online" : "Offline"}
-                </p>
+                <div className="flex items-center gap-1 mt-0.5 text-[11px] text-zinc-400">
+                  {profile.isOnline ? (
+                    <span className="font-medium text-green-400 flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" />
+                      Online
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-zinc-400">
+                      <Clock size={11} className="text-zinc-500 shrink-0" />
+                      <span className="truncate">{formatLastSeen(profile.lastSeen)}</span>
+                    </span>
+                  )}
+                </div>
               </div>
               {isOwnProfile && !isEditing && (
                 <button
