@@ -11,5 +11,6 @@ export type UserProfile = {
 
 export async function getUserProfile(userId: string): Promise<UserProfile> {
   const res = await api.get(`/users/${userId}`);
-  return res.data.data; // adjust if your ApiResponse wraps differently
+  return res.data.data;
 }
+

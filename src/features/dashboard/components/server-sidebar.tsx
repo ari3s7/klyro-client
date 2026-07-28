@@ -8,7 +8,7 @@ import { useMutation } from "@tanstack/react-query";
 import { logout } from "@/features/auth/api/logout";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { MoreVertical, Pencil, Trash2, LogOut } from "lucide-react";
+import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { deleteServer } from "@/features/server/api/delete-server";
 import { useLongPress } from "@/hooks/use-long-press";
 import { UserProfileCard } from "@/features/user/components/user-profile-card";
@@ -104,7 +104,6 @@ function ServerItem({ server, isSelected, isOwner, onSelect, onEdit, onDelete }:
         </DropdownMenu>
       )}
 
-      {/* Mobile: long press context menu (owner only) */}
       {isOwner && contextOpen && (
         <div
           className="md:hidden fixed inset-0 z-50 flex items-end justify-center bg-black/70"
@@ -210,6 +209,7 @@ const logoutMutation = useMutation({
   navigate("/login", { replace: true });
 },
 });
+console.log("RENDER — profileCard is:", profileCard);
   return (
     <aside className="flex h-full w-full flex-col items-center gap-3 border-r border-zinc-800/50 bg-[#080a0c] py-3">
       {/* Loading */}
@@ -244,50 +244,33 @@ const logoutMutation = useMutation({
       ))}
       <ServerActions />
 
-      <DropdownMenu>
-<DropdownMenuTrigger>
-  <button
-    ref={avatarButtonRef}
-    className="mt-auto flex h-10 w-10 md:h-12 md:w-12 items-center justify-center overflow-hidden rounded-lg border border-cyan-500/20 bg-[#0a0f12] font-heading text-xs md:text-sm font-bold text-cyan-400 hover:border-cyan-500/40 hover:shadow-[0_0_15px_rgba(0,229,255,0.1)] transition-all duration-200"
-  >
-    {user?.avatar ? (
-      <img
-        src={user.avatar}
-        alt={user.username}
-        className="h-full w-full object-cover"
-      />
-    ) : (
-      user?.username?.[0]?.toUpperCase() ?? "?"
-    )}
-    
-  </button>
-</DropdownMenuTrigger>
-
-  <DropdownMenuContent side="right" align="end">
-    <DropdownMenuItem
-      className="cursor-pointer font-medium text-zinc-200"
-      onClick={() => {
-        if (!user || !avatarButtonRef.current) return;
-        setProfileCard({
-          userId: user.id,
-          rect: avatarButtonRef.current.getBoundingClientRect(),
-        });
-      }}
-    >
-      {user?.username}
-    </DropdownMenuItem>
-
-    <DropdownMenuSeparator />
-
-    <DropdownMenuItem
-      className="cursor-pointer text-red-500 focus:bg-red-500/10 focus:text-red-400"
-      onClick={() => logoutMutation.mutate()}
-    >
-      <LogOut size={14} className="mr-2" />
-      Logout
-    </DropdownMenuItem>
-  </DropdownMenuContent>
-</DropdownMenu>
+      <button
+  ref={avatarButtonRef}
+  onClick={() => {
+    console.log("user:", user);
+    console.log("avatarButtonRef.current:", avatarButtonRef.current);
+    if (!user || !avatarButtonRef.current) {
+      console.log("BLOCKED by guard clause");
+      return;
+    }
+    setProfileCard({
+      userId: user.id,
+      rect: avatarButtonRef.current.getBoundingClientRect(),
+    });
+    console.log("profileCard state should now be set");
+  }}
+  className="mt-auto flex h-10 w-10 md:h-12 md:w-12 items-center justify-center overflow-hidden rounded-lg border border-cyan-500/20 bg-[#0a0f12] font-heading text-xs md:text-sm font-bold text-cyan-400 hover:border-cyan-500/40 hover:shadow-[0_0_15px_rgba(0,229,255,0.1)] transition-all duration-200"
+>
+  {user?.avatar ? (
+    <img
+      src={user.avatar}
+      alt={user.username}
+      className="h-full w-full object-cover"
+    />
+  ) : (
+    user?.username?.[0]?.toUpperCase() ?? "?"
+  )}
+</button>
 
       {/* Edit Server Dialog */}
       {/* Edit Server Dialog */}
@@ -305,6 +288,7 @@ const logoutMutation = useMutation({
           userId={profileCard.userId}
           anchorRect={profileCard.rect}
           onClose={() => setProfileCard(null)}
+          onLogout={() => logoutMutation.mutate()}
         />
       )}
     </aside>
