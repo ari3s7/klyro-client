@@ -1,8 +1,7 @@
 import { useEffect, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { LogOut, Mic, MicOff } from "lucide-react";
-import { useVoiceChannel } from "../hooks/use-voice-channel";
-import { getCurrentUser } from "@/features/auth/api/get-current-user";
+import type { RemotePeer } from "../hooks/use-voice-channel";
+
 
 function RemoteAudio({ stream }: { stream?: MediaStream }) {
   const ref = useRef<HTMLAudioElement>(null);
@@ -57,20 +56,20 @@ function ParticipantTile({
 }
 
 type VoiceChannelPanelProps = {
-  channelId: string;
+  participants: RemotePeer[];
+  muted: boolean;
+  onToggleMute: () => void;
   onLeave: () => void;
+  currentUser: { username: string; avatar?: string | null } | undefined;
 };
 
 export function VoiceChannelPanel({
-  channelId,
+  participants,
+  muted,
+  onToggleMute,
   onLeave,
+  currentUser,
 }: VoiceChannelPanelProps) {
-  const { participants, muted, leave, toggleMute } = useVoiceChannel(channelId);
-
-  const { data: currentUser } = useQuery({
-    queryKey: ["current-user"],
-    queryFn: getCurrentUser,
-  });
 
   return (
     <div className="relative flex h-full w-full flex-col overflow-hidden bg-[#050505]">
@@ -108,7 +107,7 @@ export function VoiceChannelPanel({
       {/* Controls */}
       <div className="relative z-10 flex items-center justify-center gap-3 border-t border-zinc-800/50 p-3 sm:gap-4 sm:p-4">
         <button
-          onClick={toggleMute}
+  onClick={onToggleMute}
           className={`flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-medium transition-all duration-200 sm:px-4 sm:text-sm ${
             muted
               ? "border border-zinc-700 bg-zinc-800/60 text-zinc-300 hover:border-cyan-500/30"
@@ -120,10 +119,7 @@ export function VoiceChannelPanel({
         </button>
 
         <button
-          onClick={() => {
-            leave();
-            onLeave();
-          }}
+  onClick={onLeave}
           className="flex items-center gap-2 rounded-sm border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-400 transition-all duration-200 hover:bg-red-500/20 sm:px-4 sm:text-sm"
         >
           <LogOut size={16} />

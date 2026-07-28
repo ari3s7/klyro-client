@@ -8,7 +8,7 @@ type VoiceParticipant = {
   avatar: string | null;
 };
 
-type RemotePeer = VoiceParticipant & { stream?: MediaStream };
+export type RemotePeer = VoiceParticipant & { stream?: MediaStream };
 
 const ICE_SERVERS = [{ urls: "stun:stun.l.google.com:19302" }];
 
