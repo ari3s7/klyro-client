@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { deleteMessage } from "@/features/message/api/delete-message";
+import { UserProfileCard } from "@/features/user/components/user-profile-card";
 import {
   useMutation,
   useQuery,
@@ -41,6 +42,7 @@ export default function ChatArea({
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
+  const [profileCard, setProfileCard] = useState<{ userId: string; rect: DOMRect } | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -54,7 +56,6 @@ export default function ChatArea({
   queryFn: getCurrentUser,
 });
 
-  // Join / Leave channel
   useEffect(() => {
   if (!selectedChannelId) return;
 
@@ -218,7 +219,13 @@ useEffect(() => {
       `https://api.dicebear.com/9.x/thumbs/svg?seed=${message.sender.username}`
     }
     alt={message.sender.username}
-    className="h-8 w-8 shrink-0 rounded-sm bg-zinc-800 border border-zinc-700/50"
+    onClick={(e) =>
+      setProfileCard({
+        userId: message.sender.id,
+        rect: e.currentTarget.getBoundingClientRect(),
+      })
+    }
+    className="h-8 w-8 shrink-0 cursor-pointer rounded-sm bg-zinc-800 border border-zinc-700/50 transition hover:border-cyan-500/40"
   />
               <div className="flex-1">
     <div className="flex items-center justify-between">
@@ -368,6 +375,13 @@ useEffect(() => {
           </button>
         </div>
       </div>
+      {profileCard && (
+        <UserProfileCard
+          userId={profileCard.userId}
+          anchorRect={profileCard.rect}
+          onClose={() => setProfileCard(null)}
+        />
+      )}
     </section>
   );
 }

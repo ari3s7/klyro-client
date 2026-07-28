@@ -8,9 +8,11 @@ import { useMutation } from "@tanstack/react-query";
 import { logout } from "@/features/auth/api/logout";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, LogOut } from "lucide-react";
 import { deleteServer } from "@/features/server/api/delete-server";
 import { useLongPress } from "@/hooks/use-long-press";
+import { UserProfileCard } from "@/features/user/components/user-profile-card";
+import { useRef } from "react";
 
 import {
   DropdownMenu,
@@ -36,6 +38,7 @@ interface ServerItemProps {
 
 function ServerItem({ server, isSelected, isOwner, onSelect, onEdit, onDelete }: ServerItemProps) {
   const [contextOpen, setContextOpen] = useState(false);
+  
 
   const longPress = useLongPress({
     onLongPress: () => {
@@ -63,7 +66,6 @@ function ServerItem({ server, isSelected, isOwner, onSelect, onEdit, onDelete }:
         {server.name.charAt(0).toUpperCase()}
       </button>
 
-      {/* Desktop: hover ⋮ icon (owner only) */}
       {isOwner && (
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -148,6 +150,7 @@ export default function ServerSidebar({
      selectedServerId,
      onSelectServer,
 }: ServerSidebarProps) {
+  
   const [editDialog, setEditDialog] = useState<{
     open: boolean;
     serverId: string;
@@ -157,6 +160,8 @@ export default function ServerSidebar({
     serverId: "",
     serverName: "",
   });
+  const [profileCard, setProfileCard] = useState<{ userId: string; rect: DOMRect } | null>(null);
+  const avatarButtonRef = useRef<HTMLButtonElement>(null);
 
   const {
     data: servers,
@@ -240,8 +245,11 @@ const logoutMutation = useMutation({
       <ServerActions />
 
       <DropdownMenu>
-  <DropdownMenuTrigger>
-  <button className="mt-auto flex h-10 w-10 md:h-12 md:w-12 items-center justify-center overflow-hidden rounded-lg border border-cyan-500/20 bg-[#0a0f12] font-heading text-xs md:text-sm font-bold text-cyan-400 hover:border-cyan-500/40 hover:shadow-[0_0_15px_rgba(0,229,255,0.1)] transition-all duration-200">
+<DropdownMenuTrigger>
+  <button
+    ref={avatarButtonRef}
+    className="mt-auto flex h-10 w-10 md:h-12 md:w-12 items-center justify-center overflow-hidden rounded-lg border border-cyan-500/20 bg-[#0a0f12] font-heading text-xs md:text-sm font-bold text-cyan-400 hover:border-cyan-500/40 hover:shadow-[0_0_15px_rgba(0,229,255,0.1)] transition-all duration-200"
+  >
     {user?.avatar ? (
       <img
         src={user.avatar}
@@ -256,21 +264,32 @@ const logoutMutation = useMutation({
 </DropdownMenuTrigger>
 
   <DropdownMenuContent side="right" align="end">
-    <DropdownMenuItem>
+    <DropdownMenuItem
+      className="cursor-pointer font-medium text-zinc-200"
+      onClick={() => {
+        if (!user || !avatarButtonRef.current) return;
+        setProfileCard({
+          userId: user.id,
+          rect: avatarButtonRef.current.getBoundingClientRect(),
+        });
+      }}
+    >
       {user?.username}
     </DropdownMenuItem>
 
     <DropdownMenuSeparator />
 
     <DropdownMenuItem
-      className="text-red-500 cursor-pointer"
+      className="cursor-pointer text-red-500 focus:bg-red-500/10 focus:text-red-400"
       onClick={() => logoutMutation.mutate()}
     >
+      <LogOut size={14} className="mr-2" />
       Logout
     </DropdownMenuItem>
   </DropdownMenuContent>
 </DropdownMenu>
 
+      {/* Edit Server Dialog */}
       {/* Edit Server Dialog */}
       <EditServerDialog
         serverId={editDialog.serverId}
@@ -280,6 +299,14 @@ const logoutMutation = useMutation({
           setEditDialog((prev) => ({ ...prev, open }))
         }
       />
+
+      {profileCard && (
+        <UserProfileCard
+          userId={profileCard.userId}
+          anchorRect={profileCard.rect}
+          onClose={() => setProfileCard(null)}
+        />
+      )}
     </aside>
   );
 }
