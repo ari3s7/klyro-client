@@ -21,6 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { socket } from "@/lib/socket";
 
 interface ServerSidebarProps {
   selectedServerId: string | null;
@@ -197,19 +198,13 @@ const navigate = useNavigate();
 const logoutMutation = useMutation({
   mutationFn: logout,
 
-  onSuccess: async () => {
-  await queryClient.invalidateQueries({
-    queryKey: ["me"],
-  });
-
-  queryClient.removeQueries({
-    queryKey: ["me"],
-  });
-
-  navigate("/login", { replace: true });
-},
+  onSettled: () => {
+    socket.disconnect();
+    queryClient.clear();
+    navigate("/login", { replace: true });
+  },
 });
-console.log("RENDER — profileCard is:", profileCard);
+
   return (
     <aside className="flex h-full w-full flex-col items-center gap-3 border-r border-zinc-800/50 bg-[#080a0c] py-3">
       {/* Loading */}
@@ -245,22 +240,16 @@ console.log("RENDER — profileCard is:", profileCard);
       <ServerActions />
 
       <button
-  ref={avatarButtonRef}
-  onClick={() => {
-    console.log("user:", user);
-    console.log("avatarButtonRef.current:", avatarButtonRef.current);
-    if (!user || !avatarButtonRef.current) {
-      console.log("BLOCKED by guard clause");
-      return;
-    }
-    setProfileCard({
-      userId: user.id,
-      rect: avatarButtonRef.current.getBoundingClientRect(),
-    });
-    console.log("profileCard state should now be set");
-  }}
-  className="mt-auto flex h-10 w-10 md:h-12 md:w-12 items-center justify-center overflow-hidden rounded-lg border border-cyan-500/20 bg-[#0a0f12] font-heading text-xs md:text-sm font-bold text-cyan-400 hover:border-cyan-500/40 hover:shadow-[0_0_15px_rgba(0,229,255,0.1)] transition-all duration-200"
->
+        ref={avatarButtonRef}
+        onClick={() => {
+          if (!user || !avatarButtonRef.current) return;
+          setProfileCard({
+            userId: user.id,
+            rect: avatarButtonRef.current.getBoundingClientRect(),
+          });
+        }}
+        className="mt-auto flex h-10 w-10 md:h-12 md:w-12 items-center justify-center overflow-hidden rounded-lg border border-cyan-500/20 bg-[#0a0f12] font-heading text-xs md:text-sm font-bold text-cyan-400 hover:border-cyan-500/40 hover:shadow-[0_0_15px_rgba(0,229,255,0.1)] transition-all duration-200"
+      >
   {user?.avatar ? (
     <img
       src={user.avatar}

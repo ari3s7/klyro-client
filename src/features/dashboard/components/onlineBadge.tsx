@@ -1,7 +1,12 @@
 import { useOnlineCount } from "../../../lib/useOnlineCount";
 
-export function OnlineBadge() {
-  const count = useOnlineCount();
+interface OnlineBadgeProps {
+  count?: number;
+}
+
+export function OnlineBadge({ count: countProp }: OnlineBadgeProps) {
+  const fallbackCount = useOnlineCount();
+  const count = countProp ?? fallbackCount;
 
   return (
     <div className="flex items-center gap-2 mt-1">

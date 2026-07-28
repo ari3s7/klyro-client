@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { LogOut, Mic, MicOff } from "lucide-react";
 import type { RemotePeer } from "../hooks/use-voice-channel";
+import { useAudioSpeaking } from "../hooks/use-audio-speaking";
 
 
 function RemoteAudio({ stream }: { stream?: MediaStream }) {
@@ -18,18 +19,24 @@ function ParticipantTile({
   avatar,
   isSelf,
   isMuted,
+  stream,
 }: {
   username: string;
   avatar: string | null;
   isSelf?: boolean;
   isMuted?: boolean;
+  stream?: MediaStream | null;
 }) {
+  const isSpeaking = useAudioSpeaking(stream, isMuted);
+
   return (
     <div className="flex flex-col items-center gap-3">
       <div className="relative">
         <div
-          className={`flex h-16 w-16 items-center justify-center overflow-hidden rounded-lg border sm:h-20 sm:w-20 ${
-            isMuted
+          className={`flex h-16 w-16 items-center justify-center overflow-hidden rounded-lg border transition-all duration-200 sm:h-20 sm:w-20 ${
+            isSpeaking
+              ? "border-green-400 ring-4 ring-green-400/80 ring-offset-2 ring-offset-[#050505] shadow-[0_0_25px_rgba(74,222,128,0.8)] scale-105"
+              : isMuted
               ? "border-zinc-700 bg-zinc-800/60"
               : "border-cyan-500/20 bg-zinc-800/60 shadow-[0_0_20px_rgba(0,229,255,0.06)]"
           }`}
@@ -37,7 +44,11 @@ function ParticipantTile({
           {avatar ? (
             <img src={avatar} alt={username} className="h-full w-full object-cover" />
           ) : (
-            <span className="font-heading text-lg font-bold uppercase text-cyan-400 sm:text-xl">
+            <span
+              className={`font-heading text-lg font-bold uppercase sm:text-xl ${
+                isSpeaking ? "text-green-400" : "text-cyan-400"
+              }`}
+            >
               {username.charAt(0).toUpperCase()}
             </span>
           )}
@@ -58,6 +69,7 @@ function ParticipantTile({
 type VoiceChannelPanelProps = {
   participants: RemotePeer[];
   muted: boolean;
+  localStream?: MediaStream | null;
   onToggleMute: () => void;
   onLeave: () => void;
   currentUser: { username: string; avatar?: string | null } | undefined;
@@ -66,6 +78,7 @@ type VoiceChannelPanelProps = {
 export function VoiceChannelPanel({
   participants,
   muted,
+  localStream,
   onToggleMute,
   onLeave,
   currentUser,
@@ -92,11 +105,17 @@ export function VoiceChannelPanel({
             avatar={currentUser.avatar ?? null}
             isSelf
             isMuted={muted}
+            stream={localStream}
           />
         )}
 
         {participants.map((p) => (
-          <ParticipantTile key={p.socketId} username={p.username} avatar={p.avatar} />
+          <ParticipantTile
+            key={p.socketId}
+            username={p.username}
+            avatar={p.avatar}
+            stream={p.stream}
+          />
         ))}
       </div>
 

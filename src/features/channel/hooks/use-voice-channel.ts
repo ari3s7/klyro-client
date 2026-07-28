@@ -16,6 +16,7 @@ export function useVoiceChannel(channelId: string | null) {
   const [participants, setParticipants] = useState<RemotePeer[]>([]);
   const [joined, setJoined] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
 
   const localStreamRef = useRef<MediaStream | null>(null);
   const peersRef = useRef<Map<string, RTCPeerConnection>>(new Map());
@@ -69,6 +70,7 @@ export function useVoiceChannel(channelId: string | null) {
 
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     localStreamRef.current = stream;
+    setLocalStream(stream);
 
     socket.emit("join-voice-channel", channelId);
     setJoined(true);
@@ -82,6 +84,7 @@ export function useVoiceChannel(channelId: string | null) {
     peersRef.current.clear();
     localStreamRef.current?.getTracks().forEach((t) => t.stop());
     localStreamRef.current = null;
+    setLocalStream(null);
 
     socket.emit("leave-voice-channel", channelId);
     setParticipants([]);
@@ -184,5 +187,5 @@ export function useVoiceChannel(channelId: string | null) {
     };
   }, [channelId, createPeerConnection]);
 
-  return { participants, joined, muted, join, leave, toggleMute };
+  return { participants, joined, muted, localStream, join, leave, toggleMute };
 }

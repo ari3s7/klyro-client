@@ -6,6 +6,7 @@ export type ServerMember = {
   avatar: string | null;
   isOnline: boolean;
   lastSeen: string | null;
+  role?: string;
 };
 
 export const getServerMembers = async (serverId: string): Promise<ServerMember[]> => {

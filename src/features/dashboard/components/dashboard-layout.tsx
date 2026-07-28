@@ -3,7 +3,7 @@ import ChatArea from "./chat-area";
 import ChannelSidebar from "./channel-sidebar";
 import ServerSidebar from "./server-sidebar";
 import { useEffect } from "react";
-import { socket } from "@/lib/socket";
+import { reconnectSocket } from "@/lib/socket";
 import { useQuery } from "@tanstack/react-query";
 import { getServers } from "@/features/server/api/server-api";
 import { VoiceChannelPanel } from "@/features/channel/components/voice-channel-panel";
@@ -30,10 +30,13 @@ const { data: currentUser } = useQuery({
 const selectedServer = servers.find(
   (server) => server.id === selectedServerId
 );
-const { participants, muted, leave, toggleMute } = useVoiceChannel(activeVoiceChannelId);
- useEffect(() => {
-  console.log("Socket ready:", socket.id);
-}, []);
+const { participants, muted, localStream, leave, toggleMute } = useVoiceChannel(activeVoiceChannelId);
+
+useEffect(() => {
+  if (currentUser?.id) {
+    reconnectSocket();
+  }
+}, [currentUser?.id]);
 
 function handleSelectChannel(channelId: string) {
   const channel = selectedServer?.channels.find((c) => c.id === channelId);
@@ -119,6 +122,7 @@ function handleLeaveVoice() {
       <VoiceChannelPanel
         participants={participants}
         muted={muted}
+        localStream={localStream}
         onToggleMute={toggleMute}
         onLeave={handleLeaveVoice}
         currentUser={currentUser}
@@ -138,6 +142,7 @@ function handleLeaveVoice() {
           <VoiceChannelPanel
             participants={participants}
             muted={muted}
+            localStream={localStream}
             onToggleMute={toggleMute}
             onLeave={() => {
               handleLeaveVoice();

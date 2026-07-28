@@ -10,6 +10,8 @@ import {
   type LoginSchema,
 } from "../validation/auth-schema";
 
+import { reconnectSocket } from "@/lib/socket";
+
 export default function LoginPage() {
   const navigate = useNavigate();
 
@@ -24,6 +26,7 @@ export default function LoginPage() {
   const mutation = useMutation({
     mutationFn: login,
     onSuccess: () => {
+      reconnectSocket();
       navigate("/dashboard");
     },
   });

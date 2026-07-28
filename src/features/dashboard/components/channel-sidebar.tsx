@@ -26,6 +26,8 @@ interface ChannelSidebarProps {
   onSelectChannel: (channelId: string) => void;
 }
 
+import { getServerMembers } from "@/features/server/api/get-server-members";
+
 export default function ChannelSidebar({
   selectedServer,
   selectedServerId,
@@ -66,12 +68,19 @@ export default function ChannelSidebar({
     enabled: !!selectedServerId,
   });
 
+  const { data: members = [] } = useQuery({
+    queryKey: ["server-members", selectedServerId],
+    queryFn: () => getServerMembers(selectedServerId!),
+    enabled: !!selectedServerId,
+  });
+
   const { data: user } = useQuery({
     queryKey: ["current-user"],
     queryFn: getCurrentUser,
   });
 
   const isOwner = user?.id === selectedServer?.owner?.id;
+  const onlineCount = members.filter((m) => m.isOnline || m.id === user?.id).length;
 
   const queryClient = useQueryClient();
 
@@ -110,7 +119,7 @@ export default function ChannelSidebar({
       <h2 className="font-heading text-sm font-bold uppercase tracking-[0.1em] text-white">
         {selectedServer?.name}
       </h2>
-       <OnlineBadge />
+       <OnlineBadge count={onlineCount} />
 
       <div className="mt-3 flex items-center justify-between rounded-sm border border-zinc-800 bg-zinc-900/40 px-3 py-2">
         <div>
