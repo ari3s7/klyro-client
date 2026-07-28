@@ -9,12 +9,15 @@ import { getServers } from "@/features/server/api/server-api";
 import { VoiceChannelPanel } from "@/features/channel/components/voice-channel-panel";
 import { useVoiceChannel } from "@/features/channel/hooks/use-voice-channel";
 import { getCurrentUser } from "@/features/auth/api/get-current-user";
+import { MembersPanel } from "@/features/server/components/members-panel";
+import { Users } from "lucide-react";
 
 export default function DashboardLayout() {
   const [selectedServerId, setSelectedServerId] = useState<string | null>(null);
   const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
   const [activeVoiceChannelId, setActiveVoiceChannelId] = useState<string | null>(null);
   const [voicePanelExpanded, setVoicePanelExpanded] = useState(false);
+  const [membersOpen, setMembersOpen] = useState(false);
   const { data: servers = [] } = useQuery({
   queryKey: ["servers"],
   queryFn: getServers,
@@ -85,6 +88,29 @@ function handleLeaveVoice() {
 >
   <ChatArea selectedChannelId={selectedChannelId} />
 </div>
+
+{selectedServerId && (
+  <button
+    onClick={() => setMembersOpen((prev) => !prev)}
+    className="fixed top-4 right-3 z-30 flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/90 px-3 py-1.5 text-xs text-zinc-400 hover:border-cyan-500/30 hover:text-cyan-400"
+  >
+    <Users size={14} />
+  </button>
+)}
+
+{membersOpen && selectedServerId && (
+  <>
+    {/* Desktop: side panel */}
+    <div className="hidden md:flex">
+      <MembersPanel serverId={selectedServerId} />
+    </div>
+
+    {/* Mobile: full-screen overlay */}
+    <div className="fixed inset-0 z-50 md:hidden">
+      <MembersPanel serverId={selectedServerId} onClose={() => setMembersOpen(false)} />
+    </div>
+  </>
+)}
 
 {activeVoiceChannelId && (
   <>
