@@ -12,6 +12,7 @@ export interface Message {
   type?: "TEXT" | "IMAGE" | "VIDEO" | "FILE" | "AUDIO";
   createdAt: string;
   isEdited?: boolean;
+  deletedAt?: string | null;
 
   sender: {
     id: string;

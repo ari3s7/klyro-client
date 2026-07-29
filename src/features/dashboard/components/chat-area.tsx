@@ -282,7 +282,7 @@ export default function ChatArea({
                       })}
                     </span>
 
-                    {editingId !== message.id && (
+                    {!message.deletedAt && editingId !== message.id && (
                       <DropdownMenu>
                         <DropdownMenuTrigger>
                           <button className="rounded p-1 text-zinc-600 opacity-100 transition hover:text-cyan-400 md:opacity-0 md:group-hover:opacity-100">
@@ -328,7 +328,11 @@ export default function ChatArea({
                   </div>
                 </div>
 
-                {editingId === message.id ? (
+                {message.deletedAt ? (
+                  <p className="mt-1 text-sm italic text-zinc-500">
+                    this message was deleted
+                  </p>
+                ) : editingId === message.id ? (
                   <div className="mt-2 flex flex-col gap-2">
                     <textarea
                       value={editContent}
