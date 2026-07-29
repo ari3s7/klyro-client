@@ -19,4 +19,13 @@ export interface Message {
     avatar?: string | null;
   };
   attachments?: Attachment[];
+
+  parentId?: string;
+  parent?: {
+    id: string;
+    content: string | null;
+    sender: {
+      username: string;
+    };
+  };
 }

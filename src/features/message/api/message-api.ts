@@ -36,6 +36,7 @@ export interface SendMessageInput {
   content?: string;
   type?: "TEXT" | "IMAGE" | "VIDEO" | "FILE" | "AUDIO";
   attachments?: Attachment[];
+  parentId?: string;
 }
 
 export const sendMessage = async (

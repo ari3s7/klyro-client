@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { MoreVertical, Pencil, Trash2, Paperclip, X, Loader2, Image as ImageIcon, Film } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, Paperclip, X, Loader2, Image as ImageIcon, Film, Reply, CornerDownRight } from "lucide-react";
 import { deleteMessage } from "@/features/message/api/delete-message";
 import { UserProfileCard } from "@/features/user/components/user-profile-card";
 import {
@@ -48,6 +48,7 @@ export default function ChatArea({
 
   const [pendingAttachment, setPendingAttachment] = useState<Attachment | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -108,12 +109,13 @@ export default function ChatArea({
   }, [messages]);
 
   const mutation = useMutation({
-    mutationFn: (data: { content?: string; attachments?: Attachment[] }) =>
+    mutationFn: (data: { content?: string; attachments?: Attachment[]; parentId?: string }) =>
       sendMessage(selectedChannelId!, data),
 
     onSuccess: () => {
       setContent("");
       setPendingAttachment(null);
+      setReplyingTo(null);
     },
 
     onError: (error) => {
@@ -174,6 +176,14 @@ export default function ChatArea({
     }
   };
 
+  const startReply = (message: Message) => {
+    setReplyingTo(message);
+  };
+
+  const cancelReply = () => {
+    setReplyingTo(null);
+  };
+
   const handleSend = () => {
     if (!selectedChannelId) return;
     if (!content.trim() && !pendingAttachment) return;
@@ -181,6 +191,7 @@ export default function ChatArea({
     mutation.mutate({
       content: content.trim() || undefined,
       attachments: pendingAttachment ? [pendingAttachment] : undefined,
+      parentId: replyingTo?.id,
     });
   };
 
@@ -271,7 +282,7 @@ export default function ChatArea({
                       })}
                     </span>
 
-                    {message.sender.id === user?.id && editingId !== message.id && (
+                    {editingId !== message.id && (
                       <DropdownMenu>
                         <DropdownMenuTrigger>
                           <button className="rounded p-1 text-zinc-600 opacity-100 transition hover:text-cyan-400 md:opacity-0 md:group-hover:opacity-100">
@@ -282,21 +293,35 @@ export default function ChatArea({
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
                             className="cursor-pointer"
-                            onClick={() => startEdit(message)}
+                            onClick={() => startReply(message)}
                           >
-                            <Pencil size={14} className="mr-2" />
-                            Edit
+                            <Reply size={14} className="mr-2" />
+                            Reply
                           </DropdownMenuItem>
 
-                          <DropdownMenuSeparator />
+                          {message.sender.id === user?.id && (
+                            <>
+                              <DropdownMenuSeparator />
 
-                          <DropdownMenuItem
-                            className="cursor-pointer text-red-500"
-                            onClick={() => handleDelete(message.id)}
-                          >
-                            <Trash2 size={14} className="mr-2" />
-                            Delete
-                          </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="cursor-pointer"
+                                onClick={() => startEdit(message)}
+                              >
+                                <Pencil size={14} className="mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+
+                              <DropdownMenuSeparator />
+
+                              <DropdownMenuItem
+                                className="cursor-pointer text-red-500"
+                                onClick={() => handleDelete(message.id)}
+                              >
+                                <Trash2 size={14} className="mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     )}
@@ -342,6 +367,22 @@ export default function ChatArea({
                   </div>
                 ) : (
                   <>
+                    {message.parent && (
+                      <div
+                        className="mt-1.5 mb-1 flex items-start gap-2 rounded-sm border-l-2 border-cyan-500/40 bg-cyan-950/10 px-3 py-1.5 cursor-pointer transition hover:bg-cyan-950/20"
+                      >
+                        <CornerDownRight size={12} className="mt-0.5 shrink-0 text-cyan-500/50" />
+                        <div className="min-w-0">
+                          <p className="font-heading text-[10px] font-bold uppercase tracking-[0.05em] text-cyan-400/70">
+                            {message.parent.sender.username}
+                          </p>
+                          <p className="truncate text-xs text-zinc-500">
+                            {message.parent.content || "[attachment]"}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
                     {message.content && (
                       <p className="mt-1 text-sm leading-relaxed text-zinc-300 break-words">
                         {message.content}
@@ -388,6 +429,26 @@ export default function ChatArea({
           <p className="mb-2 text-xs italic text-cyan-500/60">
             {typingUser} is typing...
           </p>
+        )}
+
+        {/* Reply preview banner */}
+        {replyingTo && (
+          <div className="mb-3 flex items-center gap-2 rounded-md border border-cyan-500/30 bg-cyan-950/20 px-3 py-2 text-xs text-cyan-300">
+            <Reply size={14} className="shrink-0 text-cyan-400" />
+            <span className="truncate">
+              Replying to <span className="font-bold">{replyingTo.sender.username}</span>
+              {replyingTo.content && (
+                <span className="ml-1.5 text-zinc-500">— {replyingTo.content.slice(0, 60)}{replyingTo.content.length > 60 ? "..." : ""}</span>
+              )}
+            </span>
+            <button
+              onClick={cancelReply}
+              className="ml-auto rounded p-1 text-zinc-400 hover:bg-zinc-800 hover:text-white transition"
+              title="Cancel reply"
+            >
+              <X size={14} />
+            </button>
+          </div>
         )}
 
         {/* Attachment preview banner */}
