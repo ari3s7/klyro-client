@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { getServerMembers, type ServerMember } from "../api/get-server-members";
+import { kickMember } from "../api/kick-member";
 import { getServers } from "../api/server-api";
 import type { Server } from "../types";
 import { getCurrentUser } from "@/features/auth/api/get-current-user";
 import { socket } from "@/lib/socket";
 import { UserProfileCard } from "@/features/user/components/user-profile-card";
+import { X } from "lucide-react";
 
 type MembersPanelProps = {
   serverId: string;
@@ -16,14 +18,29 @@ function MemberRow({
   member,
   isOwner,
   isOnline,
+  isCurrentUserOwner,
+  serverId,
   onClick,
 }: {
   member: ServerMember;
   isOwner?: boolean;
   isOnline?: boolean;
+  isCurrentUserOwner?: boolean;
+  serverId: string;
   onClick: (rect: DOMRect) => void;
 }) {
   const ref = useRef<HTMLButtonElement>(null);
+  const queryClient = useQueryClient();
+
+  const kickMutation = useMutation({
+    mutationFn: () => kickMember(serverId, member.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["server-members", serverId] });
+    },
+    onError: (error: unknown) => {
+      console.error(error);
+    },
+  });
 
   return (
     <button
@@ -58,6 +75,23 @@ function MemberRow({
           <span className="font-heading text-[9px] font-bold uppercase tracking-[0.12em] text-cyan-400 leading-none mt-0.5">
             Owner
           </span>
+        )}
+      </div>
+      <div className="flex items-center gap-1">
+        {isCurrentUserOwner && !isOwner && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (confirm(`Kick ${member.username} from the server?`)) {
+                kickMutation.mutate();
+              }
+            }}
+            disabled={kickMutation.isPending}
+            title={`Kick ${member.username}`}
+            className="rounded-sm p-1 text-zinc-600 transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
+          >
+            <X size={14} />
+          </button>
         )}
       </div>
     </button>
@@ -136,6 +170,8 @@ export function MembersPanel({ serverId, onClose }: MembersPanelProps) {
                 member={member}
                 isOwner={isOwner}
                 isOnline={isOnline}
+                isCurrentUserOwner={Boolean(ownerId && currentUser?.id && String(currentUser.id) === String(ownerId))}
+                serverId={serverId}
                 onClick={(rect) => setProfileCard({ userId: member.id, rect })}
               />
             );

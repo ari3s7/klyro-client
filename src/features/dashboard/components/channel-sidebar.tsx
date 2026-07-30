@@ -5,7 +5,8 @@ import EditChannelDialog from "@/features/channel/components/edit-channel-dialog
 import { getChannels } from "@/features/channel/api/channel-api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteChannel } from "@/features/channel/api/delete-channel";
-import { Hash, Mic, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { leaveServer } from "@/features/server/api/leave-server";
+import { Hash, Mic, MoreVertical, Pencil, Trash2, LogOut } from "lucide-react";
 import type { Server } from "@/features/server/types";
 import { OnlineBadge } from "@/features/dashboard/components/onlineBadge";
 import { getCurrentUser } from "@/features/auth/api/get-current-user";
@@ -24,6 +25,7 @@ interface ChannelSidebarProps {
   selectedServerId: string | null;
   selectedChannelId: string | null;
   onSelectChannel: (channelId: string) => void;
+  onLeaveServer?: () => void;
 }
 
 import { getServerMembers } from "@/features/server/api/get-server-members";
@@ -33,6 +35,7 @@ export default function ChannelSidebar({
   selectedServerId,
   selectedChannelId,
   onSelectChannel,
+  onLeaveServer,
 }: ChannelSidebarProps) {
   const [editDialog, setEditDialog] = useState<{
     open: boolean;
@@ -91,7 +94,18 @@ export default function ChannelSidebar({
         queryKey: ["channels", selectedServerId],
       });
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
+      console.error(error);
+    },
+  });
+
+  const leaveMutation = useMutation({
+    mutationFn: () => leaveServer(selectedServerId!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["servers"] });
+      onLeaveServer?.();
+    },
+    onError: (error: unknown) => {
       console.error(error);
     },
   });
@@ -237,6 +251,24 @@ export default function ChannelSidebar({
               <span>Delete Channel</span>
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Leave Server (non-owner only) */}
+      {!isOwner && (
+        <div className="border-t border-zinc-800/50 p-2">
+          <button
+            onClick={() => {
+              if (confirm("Are you sure you want to leave this server?")) {
+                leaveMutation.mutate();
+              }
+            }}
+            disabled={leaveMutation.isPending}
+            className="flex w-full items-center justify-center gap-2 rounded-sm px-3 py-2.5 text-xs font-medium text-red-400 transition hover:bg-red-500/10 hover:text-red-300 active:bg-red-500/20 disabled:opacity-50"
+          >
+            <LogOut size={14} />
+            {leaveMutation.isPending ? "Leaving..." : "Leave Server"}
+          </button>
         </div>
       )}
 

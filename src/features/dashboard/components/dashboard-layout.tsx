@@ -81,6 +81,10 @@ function handleLeaveVoice() {
         selectedServerId={selectedServerId}
         selectedChannelId={selectedChannelId}
         onSelectChannel={handleSelectChannel}
+        onLeaveServer={() => {
+          setSelectedServerId(null);
+          setSelectedChannelId(null);
+        }}
 />
     </div>
 
@@ -89,7 +93,10 @@ function handleLeaveVoice() {
     selectedChannelId ? "flex" : "hidden md:flex"
   } flex-1 min-w-0`}
 >
-  <ChatArea selectedChannelId={selectedChannelId} />
+  <ChatArea
+    selectedChannelId={selectedChannelId}
+    onBack={() => setSelectedChannelId(null)}
+  />
 </div>
 
 {selectedServerId && (
