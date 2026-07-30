@@ -23,9 +23,6 @@ export default function RegisterPage() {
 
   const mutation = useMutation({
     mutationFn: register,
-    onSuccess: () => {
-      navigate("/login");
-    },
   });
 
   const onSubmit = (data: RegisterSchema) => {
@@ -51,80 +48,120 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="space-y-5"
-        >
-          <div>
-            <label className="mb-2 block font-heading text-[10px] uppercase tracking-[0.2em] text-zinc-400">
-              Username
-            </label>
-            <input
-              type="text"
-              placeholder="Choose a handle"
-              {...registerField("username")}
-              className="w-full rounded-sm border border-zinc-800 bg-zinc-900/60 px-4 py-3 font-mono-body text-sm text-white outline-none transition-all placeholder:text-zinc-600 focus:border-cyan-500/40 focus:shadow-[0_0_15px_rgba(0,229,255,0.08)]"
-            />
-            {errors.username && (
-              <p className="mt-1.5 text-xs text-red-400">
-                {errors.username.message}
-              </p>
-            )}
-          </div>
+        {mutation.isSuccess ? (
+          <div className="py-4 space-y-6 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-7 w-7"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 002-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
 
-          <div>
-            <label className="mb-2 block font-heading text-[10px] uppercase tracking-[0.2em] text-zinc-400">
-              Email Address
-            </label>
-            <input
-              type="email"
-              placeholder="you@domain.com"
-              {...registerField("email")}
-              className="w-full rounded-sm border border-zinc-800 bg-zinc-900/60 px-4 py-3 font-mono-body text-sm text-white outline-none transition-all placeholder:text-zinc-600 focus:border-cyan-500/40 focus:shadow-[0_0_15px_rgba(0,229,255,0.08)]"
-            />
-            {errors.email && (
-              <p className="mt-1.5 text-xs text-red-400">
-                {errors.email.message}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="mb-2 block font-heading text-[10px] uppercase tracking-[0.2em] text-zinc-400">
-              Password
-            </label>
-            <input
-              type="password"
-              placeholder="••••••••••"
-              {...registerField("password")}
-              className="w-full rounded-sm border border-zinc-800 bg-zinc-900/60 px-4 py-3 font-mono-body text-sm text-white outline-none transition-all placeholder:text-zinc-600 focus:border-cyan-500/40 focus:shadow-[0_0_15px_rgba(0,229,255,0.08)]"
-            />
-            {errors.password && (
-              <p className="mt-1.5 text-xs text-red-400">
-                {errors.password.message}
-              </p>
-            )}
-          </div>
-
-          {mutation.isError && (
-            <div className="rounded-sm border border-red-500/20 bg-red-500/5 px-3 py-2">
-              <p className="text-xs text-red-400">
-                {axios.isAxiosError(mutation.error)
-                  ? mutation.error.response?.data?.message ??
-                    "Registration failed"
-                  : "Connection error"}
+            <div>
+              <span className="inline-block rounded-full bg-cyan-500/10 border border-cyan-500/20 px-3 py-1 font-heading text-[10px] uppercase tracking-[0.15em] text-cyan-400">
+                Verification Email Sent
+              </span>
+              <h2 className="mt-3 font-heading text-xl font-bold uppercase tracking-wider text-white">
+                Check Your Inbox
+              </h2>
+              <p className="mt-2 text-xs text-zinc-400 leading-relaxed">
+                We've sent a verification link to your email address. Please click the link to verify your account before signing in.
               </p>
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={mutation.isPending}
-            className="w-full rounded-sm bg-cyan-400 py-3 font-heading text-sm font-bold uppercase tracking-[0.15em] text-black transition-all duration-300 hover:bg-cyan-300 hover:shadow-[0_0_25px_rgba(0,229,255,0.25)] disabled:cursor-not-allowed disabled:opacity-50"
+            <button
+              onClick={() => navigate("/login")}
+              className="w-full rounded-sm bg-cyan-400 py-3 font-heading text-sm font-bold uppercase tracking-[0.15em] text-black transition-all duration-300 hover:bg-cyan-300 hover:shadow-[0_0_25px_rgba(0,229,255,0.25)]"
+            >
+              Go to Sign In →
+            </button>
+          </div>
+        ) : (
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-5"
           >
-            {mutation.isPending ? "Initializing..." : "Create Account →"}
-          </button>
-        </form>
+            <div>
+              <label className="mb-2 block font-heading text-[10px] uppercase tracking-[0.2em] text-zinc-400">
+                Username
+              </label>
+              <input
+                type="text"
+                placeholder="Choose a handle"
+                {...registerField("username")}
+                className="w-full rounded-sm border border-zinc-800 bg-zinc-900/60 px-4 py-3 font-mono-body text-sm text-white outline-none transition-all placeholder:text-zinc-600 focus:border-cyan-500/40 focus:shadow-[0_0_15px_rgba(0,229,255,0.08)]"
+              />
+              {errors.username && (
+                <p className="mt-1.5 text-xs text-red-400">
+                  {errors.username.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="mb-2 block font-heading text-[10px] uppercase tracking-[0.2em] text-zinc-400">
+                Email Address
+              </label>
+              <input
+                type="email"
+                placeholder="you@domain.com"
+                {...registerField("email")}
+                className="w-full rounded-sm border border-zinc-800 bg-zinc-900/60 px-4 py-3 font-mono-body text-sm text-white outline-none transition-all placeholder:text-zinc-600 focus:border-cyan-500/40 focus:shadow-[0_0_15px_rgba(0,229,255,0.08)]"
+              />
+              {errors.email && (
+                <p className="mt-1.5 text-xs text-red-400">
+                  {errors.email.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="mb-2 block font-heading text-[10px] uppercase tracking-[0.2em] text-zinc-400">
+                Password
+              </label>
+              <input
+                type="password"
+                placeholder="••••••••••"
+                {...registerField("password")}
+                className="w-full rounded-sm border border-zinc-800 bg-zinc-900/60 px-4 py-3 font-mono-body text-sm text-white outline-none transition-all placeholder:text-zinc-600 focus:border-cyan-500/40 focus:shadow-[0_0_15px_rgba(0,229,255,0.08)]"
+              />
+              {errors.password && (
+                <p className="mt-1.5 text-xs text-red-400">
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
+
+            {mutation.isError && (
+              <div className="rounded-sm border border-red-500/20 bg-red-500/5 px-3 py-2">
+                <p className="text-xs text-red-400">
+                  {axios.isAxiosError(mutation.error)
+                    ? mutation.error.response?.data?.message ??
+                      "Registration failed"
+                    : "Connection error"}
+                </p>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={mutation.isPending}
+              className="w-full rounded-sm bg-cyan-400 py-3 font-heading text-sm font-bold uppercase tracking-[0.15em] text-black transition-all duration-300 hover:bg-cyan-300 hover:shadow-[0_0_25px_rgba(0,229,255,0.25)] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {mutation.isPending ? "Initializing..." : "Create Account →"}
+            </button>
+          </form>
+        )}
 
         <p className="mt-8 text-center text-xs text-zinc-600">
           Already have an account?{" "}

@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router-dom";
 
 import LoginPage from "@/features/auth/pages/login-page";
 import RegisterPage from "@/features/auth/pages/register-page";
+import VerifyEmailPage from "@/features/auth/pages/verify-email-page";
 import DashboardPage from "@/features/dashboard/pages/dashboard-page";
 import ProtectedRoute from "./protected-route";
 import PublicRoute from "./public-route";
@@ -22,6 +23,10 @@ export const router = createBrowserRouter([
     {
       path: "/register",
       element: <RegisterPage />,
+    },
+    {
+      path: "/verify-email",
+      element: <VerifyEmailPage />,
     },
   ],
 },
