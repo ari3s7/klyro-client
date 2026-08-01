@@ -30,7 +30,17 @@ const { data: currentUser } = useQuery({
 const selectedServer = servers.find(
   (server) => server.id === selectedServerId
 );
-const { participants, muted, localStream, leave, toggleMute } = useVoiceChannel(activeVoiceChannelId);
+const {
+  participants,
+  muted,
+  localStream,
+  localScreenStream,
+  isScreenSharing,
+  leave,
+  toggleMute,
+  startScreenShare,
+  stopScreenShare,
+} = useVoiceChannel(activeVoiceChannelId);
 
 useEffect(() => {
   if (currentUser?.id) {
@@ -125,14 +135,18 @@ function handleLeaveVoice() {
 {activeVoiceChannelId && (
   <>
     {/* Desktop: permanent side panel */}
-    <div className="w-72 shrink-0 border-l border-zinc-800/50 hidden md:flex">
+    <div className="w-80 shrink-0 border-l border-zinc-800/50 hidden md:flex">
       <VoiceChannelPanel
         participants={participants}
         muted={muted}
         localStream={localStream}
+        localScreenStream={localScreenStream}
+        isScreenSharing={isScreenSharing}
         onToggleMute={toggleMute}
         onLeave={handleLeaveVoice}
         currentUser={currentUser}
+        onShareScreen={startScreenShare}
+        onStopScreenShare={stopScreenShare}
       />
     </div>
 
@@ -140,22 +154,21 @@ function handleLeaveVoice() {
     <div className="md:hidden">
       {voicePanelExpanded ? (
         <div className="fixed inset-0 z-50 bg-[#050505]">
-          <button
-            onClick={() => setVoicePanelExpanded(false)}
-            className="absolute right-4 top-4 z-20 rounded-sm border border-zinc-700 bg-zinc-800/80 px-3 py-1.5 text-xs text-zinc-300"
-          >
-            Close
-          </button>
           <VoiceChannelPanel
             participants={participants}
             muted={muted}
             localStream={localStream}
+            localScreenStream={localScreenStream}
+            isScreenSharing={isScreenSharing}
             onToggleMute={toggleMute}
             onLeave={() => {
               handleLeaveVoice();
               setVoicePanelExpanded(false);
             }}
             currentUser={currentUser}
+            onShareScreen={startScreenShare}
+            onStopScreenShare={stopScreenShare}
+            onClose={() => setVoicePanelExpanded(false)}
           />
         </div>
       ) : (

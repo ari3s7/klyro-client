@@ -8,7 +8,7 @@ type VoiceParticipant = {
   avatar: string | null;
 };
 
-export type RemotePeer = VoiceParticipant & { stream?: MediaStream };
+export type RemotePeer = VoiceParticipant & { audioStream?: MediaStream; screenStream?: MediaStream; };
 
 const ICE_SERVERS = [{ urls: "stun:stun.l.google.com:19302" }];
 
@@ -17,8 +17,12 @@ export function useVoiceChannel(channelId: string | null) {
   const [joined, setJoined] = useState(false);
   const [muted, setMuted] = useState(false);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [localScreenStream, setLocalScreenStream] = useState<MediaStream | null>(null);
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
 
   const localStreamRef = useRef<MediaStream | null>(null);
+  const screenStreamRef = useRef<MediaStream | null>(null);
+  const screenSendersRef = useRef<Map<string, RTCRtpSender>>(new Map());
   const peersRef = useRef<Map<string, RTCPeerConnection>>(new Map());
   const hasJoinedRef = useRef(false);
 
@@ -33,13 +37,48 @@ export function useVoiceChannel(channelId: string | null) {
       pc.addTrack(track, localStreamRef.current!);
     });
 
+    if (screenStreamRef.current) {
+      const screenTrack = screenStreamRef.current.getVideoTracks()[0];
+      if (screenTrack) {
+        const sender = pc.addTrack(screenTrack, screenStreamRef.current);
+        screenSendersRef.current.set(remoteSocketId, sender);
+      }
+    }
+
     pc.ontrack = (event) => {
-      console.log("[peer] ontrack fired from", remoteSocketId, event.streams[0]);
+      const track = event.track;
+
       setParticipants((prev) =>
-        prev.map((p) =>
-          p.socketId === remoteSocketId ? { ...p, stream: event.streams[0] } : p
-        )
+        prev.map((p) => {
+          if (p.socketId !== remoteSocketId) return p;
+
+          if (track.kind === "audio") {
+            return {
+              ...p,
+              audioStream: event.streams[0],
+            };
+          }
+
+          if (track.kind === "video") {
+            return {
+              ...p,
+              screenStream: event.streams[0],
+            };
+          }
+
+          return p;
+        })
       );
+
+      track.onended = () => {
+        if (track.kind === "video") {
+          setParticipants((prev) =>
+            prev.map((p) =>
+              p.socketId === remoteSocketId ? { ...p, screenStream: undefined } : p
+            )
+          );
+        }
+      };
     };
 
     pc.onicecandidate = (event) => {
@@ -64,6 +103,24 @@ export function useVoiceChannel(channelId: string | null) {
     return pc;
   }, []);
 
+  const renegotiate = useCallback(
+    async (remoteSocketId: string) => {
+      const pc = peersRef.current.get(remoteSocketId);
+
+      if (!pc) return;
+
+      const offer = await pc.createOffer();
+
+      await pc.setLocalDescription(offer);
+
+      socket.emit("voice-offer", {
+        to: remoteSocketId,
+        offer,
+      });
+    },
+    []
+  );
+
   const join = useCallback(async () => {
     if (!channelId || hasJoinedRef.current) return;
     hasJoinedRef.current = true;
@@ -76,10 +133,76 @@ export function useVoiceChannel(channelId: string | null) {
     setJoined(true);
   }, [channelId]);
 
+  const stopScreenShare = useCallback(async () => {
+    if (!screenStreamRef.current) return;
+
+    console.log("[voice] stopping screen share...");
+    screenStreamRef.current.getTracks().forEach((t) => t.stop());
+
+    for (const [socketId, pc] of peersRef.current.entries()) {
+      const sender = screenSendersRef.current.get(socketId);
+      if (sender) {
+        try {
+          pc.removeTrack(sender);
+        } catch (err) {
+          console.error("Failed to remove screen track from peer", socketId, err);
+        }
+      }
+      await renegotiate(socketId);
+    }
+
+    screenSendersRef.current.clear();
+    screenStreamRef.current = null;
+    setLocalScreenStream(null);
+    setIsScreenSharing(false);
+  }, [renegotiate]);
+
+  const startScreenShare = useCallback(async () => {
+    try {
+      if (screenStreamRef.current) {
+        await stopScreenShare();
+      }
+
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: true,
+      });
+
+      screenStreamRef.current = stream;
+      setLocalScreenStream(stream);
+      setIsScreenSharing(true);
+
+      const screenTrack = stream.getVideoTracks()[0];
+
+      screenTrack.onended = () => {
+        console.log("Screen sharing ended by user/browser");
+        stopScreenShare();
+      };
+
+      for (const [socketId, pc] of peersRef.current.entries()) {
+        const sender = pc.addTrack(screenTrack, stream);
+        screenSendersRef.current.set(socketId, sender);
+        await renegotiate(socketId);
+      }
+    } catch (err) {
+      console.error("Failed to start screen sharing", err);
+      setLocalScreenStream(null);
+      setIsScreenSharing(false);
+    }
+  }, [renegotiate, stopScreenShare]);
+
   const leave = useCallback(() => {
     if (!channelId) return;
     hasJoinedRef.current = false;
 
+    if (screenStreamRef.current) {
+      screenStreamRef.current.getTracks().forEach((t) => t.stop());
+      screenStreamRef.current = null;
+      setLocalScreenStream(null);
+      setIsScreenSharing(false);
+    }
+
+    screenSendersRef.current.clear();
     peersRef.current.forEach((pc) => pc.close());
     peersRef.current.clear();
     localStreamRef.current?.getTracks().forEach((t) => t.stop());
@@ -109,7 +232,7 @@ export function useVoiceChannel(channelId: string | null) {
     return () => {
       leave();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [channelId]);
 
   useEffect(() => {
@@ -119,11 +242,9 @@ export function useVoiceChannel(channelId: string | null) {
       setParticipants(existing.map((p) => ({ ...p })));
 
       for (const peer of existing) {
-        const pc = createPeerConnection(peer.socketId);
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        console.log("[peer] sending offer to", peer.socketId);
-        socket.emit("voice-offer", { to: peer.socketId, offer });
+        createPeerConnection(peer.socketId);
+
+        await renegotiate(peer.socketId);
       }
     }
 
@@ -185,7 +306,19 @@ export function useVoiceChannel(channelId: string | null) {
       socket.off("voice-ice-candidate", handleIceCandidate);
       socket.off("peer-left-voice", handlePeerLeft);
     };
-  }, [channelId, createPeerConnection]);
+  }, [channelId, createPeerConnection, renegotiate]);
 
-  return { participants, joined, muted, localStream, join, leave, toggleMute };
+  return {
+    participants,
+    joined,
+    muted,
+    localStream,
+    localScreenStream,
+    isScreenSharing,
+    join,
+    leave,
+    toggleMute,
+    startScreenShare,
+    stopScreenShare,
+  };
 }
